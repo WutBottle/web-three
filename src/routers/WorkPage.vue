@@ -78,7 +78,7 @@
 <template>
   <div class="WorkPage">
     <div class="top">
-      <a-select class="select" v-model="currentModelName" style="width: 120px" @change="handleChange">
+      <a-select class="select" v-model="currentModelName" placeholder="请选择模型" style="width: 120px" @change="handleChange">
         <a-select-option value="轮轴">
           轮轴
         </a-select-option>
@@ -139,20 +139,21 @@
     </div>
     <div id="webgl"></div>
     <div v-if="loading" id="load-mask">
-      <a-progress class="progress" type="circle" :percent="loadingPercent" />
+      <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
   </div>
 </template>
 
 <script>
   import * as Three from 'three';
-  import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
+  import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
+  import {STLLoader} from 'three/examples/jsm/loaders/STLLoader'
 
   export default {
     name: "WorkPage",
     data() {
       return {
-        currentModelName: '轮轴',
+        currentModelName: '请选择模型',
         scene: new Three.Scene(), // 场景对象
         camera: null, // 相机对象
         point: null, // 光源设置 点光源
@@ -179,8 +180,8 @@
       }
     },
     methods: {
-      handleChange() {
-
+      handleChange(value) {
+        this.loaderSTL(value);
       },
       initialScene() {
         this.initialLight();
@@ -221,7 +222,6 @@
           line2.rotation.y = 90 * Math.PI / 180;   //转90度
           this.gridGroup.add(line1, line2);
         }
-        this.gridGroup.name = 'bottomGrid';
         this.scene.add(this.gridGroup);
       },
       // 绘制坐标轴
@@ -285,6 +285,10 @@
       showHide() {
 
       },
+      removeHelper() {
+        this.scene.remove(this.gridGroup);
+        this.scene.remove(this.axisGroup);
+      },
       handleReset() {
         this.width = window.innerWidth - 200;
         this.height = window.innerHeight - 60;
@@ -301,6 +305,36 @@
         this.camera.updateProjectionMatrix();
         this.render();
       },
+      removeGroup() {
+        let allChildren = this.scene.children;
+        for (let i = allChildren.length - 1; i >= 0; i--) {
+          if (allChildren[i] instanceof Three.Group) {
+            this.scene.remove(allChildren[i]);
+          }
+        }
+      },
+      loaderSTL(name) {
+        this.loading = true;
+        let loader = new STLLoader();
+        loader.load('http://10.11.31.147:8000/' + name + '.stl', (geometry) => {
+          // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
+          this.removeGroup(this.currentModelName);
+          let material = new Three.MeshLambertMaterial({
+            color: 0x29d6d6,
+          }); //材质对象Material
+          let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
+          let group = new Three.Group();
+          group.name = name;
+          group.add(mesh);
+          this.scene.add(group); //网格模型添加到场景中
+          this.drawGrid();
+          this.drawAxis();
+          this.render();
+          this.loading = false;
+        }, (xhr) => {
+          this.loadingPercent = Number((xhr.loaded/xhr.total*100).toFixed(2));
+        })
+      }
     }
   }
 </script>
