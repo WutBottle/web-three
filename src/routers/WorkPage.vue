@@ -78,7 +78,8 @@
 <template>
   <div class="WorkPage">
     <div class="top">
-      <a-select class="select" v-model="currentModelName" placeholder="请选择模型" style="width: 120px" @change="handleChange">
+      <a-select class="select" v-model="currentModelName" placeholder="请选择模型" style="width: 120px"
+                @change="handleChange">
         <a-select-option value="轮轴">
           轮轴
         </a-select-option>
@@ -220,6 +221,7 @@
           let line2 = new Three.Line(geometry, new Three.LineBasicMaterial({color: 0xffffdd, opacity: 0.1}));
           line2.position.x = (i * unitLen) - len;
           line2.rotation.y = 90 * Math.PI / 180;   //转90度
+          this.gridGroup.name = 'bottomGrid';
           this.gridGroup.add(line1, line2);
         }
         this.scene.add(this.gridGroup);
@@ -252,6 +254,7 @@
         let arrowHelperY = new Three.ArrowHelper(dirY, origin, length, hexY, headLength, headWidth);
         let arrowHelperZ = new Three.ArrowHelper(dirZ, origin, length, hexZ, headLength, headWidth);
         this.axisGroup.add(arrowHelperX, arrowHelperY, arrowHelperZ);
+        this.axisGroup.name = 'centerAxis';
         this.scene.add(this.axisGroup);
       },
       initialBG() {
@@ -273,21 +276,32 @@
         this.scene.add(this.point); // 点光源添加到场景中
         this.scene.add(this.ambient); // 环境光添加到场景中
       },
-      resetModel() {
-
-      },
       handleEnlarge() {
-
+        this.s *= 0.9;
+        this.camera.left = -this.s * this.k;
+        this.camera.right = this.s * this.k;
+        this.camera.top = this.s;
+        this.camera.bottom = -this.s;
+        this.camera.updateProjectionMatrix();
+        this.render();
       },
       handleNarrow() {
-
+        this.s *= 1.1;
+        this.camera.left = -this.s * this.k;
+        this.camera.right = this.s * this.k;
+        this.camera.top = this.s;
+        this.camera.bottom = -this.s;
+        this.camera.updateProjectionMatrix();
+        this.render();
       },
-      showHide() {
-
-      },
-      removeHelper() {
-        this.scene.remove(this.gridGroup);
-        this.scene.remove(this.axisGroup);
+      showHide(name) {
+        for (let i in this.scene.children) {
+          if (this.scene.children[i].name === name) {
+            this.scene.children[i].visible = !this.scene.children[i].visible;
+            this.render();
+            return;
+          }
+        }
       },
       handleReset() {
         this.width = window.innerWidth - 200;
@@ -313,12 +327,22 @@
           }
         }
       },
+      // 计算合适视野
+      computeSight(data) {
+        let temp = new Array(3);
+        temp[0] = data.max.x - data.min.x;
+        temp[1] = data.max.y - data.min.y;
+        temp[2] = data.max.z - data.min.z;
+        return Math.floor(Math.max(...temp) * 1.1);
+      },
       loaderSTL(name) {
+        this.removeGroup();
         this.loading = true;
         let loader = new STLLoader();
         loader.load('http://10.11.31.147:8000/' + name + '.stl', (geometry) => {
           // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
-          this.removeGroup(this.currentModelName);
+          geometry.computeBoundingBox();
+          this.initialSight = this.computeSight(geometry.boundingBox);
           let material = new Three.MeshLambertMaterial({
             color: 0x29d6d6,
           }); //材质对象Material
@@ -327,13 +351,25 @@
           group.name = name;
           group.add(mesh);
           this.scene.add(group); //网格模型添加到场景中
-          this.drawGrid();
-          this.drawAxis();
-          this.render();
+          this.drawGrid(this.initialSight);
+          this.drawAxis(this.initialSight);
+          this.resetModel();
           this.loading = false;
         }, (xhr) => {
-          this.loadingPercent = Number((xhr.loaded/xhr.total*100).toFixed(2));
+          this.loadingPercent = Number((xhr.loaded / xhr.total * 100).toFixed(2));
         })
+      },
+      resetModel() {
+        this.k = this.width / this.height; //窗口宽高比
+        this.s = this.initialSight || 1000;
+        this.camera.left = -this.s * this.k;
+        this.camera.right = this.s * this.k;
+        this.camera.top = this.s;
+        this.camera.bottom = -this.s;
+        this.camera.position.set(0, 0, 400); //设置相机位置
+        this.camera.lookAt(this.scene.position); //设置相机方向(指向的场景对象)
+        this.camera.updateProjectionMatrix();
+        this.render();
       }
     }
   }
