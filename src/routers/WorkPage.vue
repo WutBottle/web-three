@@ -106,6 +106,9 @@
         <button @click="showHide('bottomGrid')">
           <i class="iconfont icon-grid"></i>
         </button>
+        <button @click="showHide('surroundBox')">
+          <i class="iconfont icon-box"></i>
+        </button>
       </div>
     </div>
     <div class="left">
@@ -295,12 +298,9 @@
         this.render();
       },
       showHide(name) {
-        for (let i in this.scene.children) {
-          if (this.scene.children[i].name === name) {
-            this.scene.children[i].visible = !this.scene.children[i].visible;
-            this.render();
-            return;
-          }
+        if(this.scene.getObjectByName(name)) {
+          this.scene.getObjectByName(name).visible = !this.scene.getObjectByName(name).visible;
+          this.render();
         }
       },
       handleReset() {
@@ -339,12 +339,14 @@
         this.removeGroup();
         this.loading = true;
         let loader = new STLLoader();
-        loader.load('http://10.11.31.147:8000/' + name + '.stl', (geometry) => {
+        loader.load('http://192.168.1.6:8000/' + name + '.stl', (geometry) => {
           // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
           geometry.computeBoundingBox();
+          this.createSurroundBox(geometry.boundingBox);
           this.initialSight = this.computeSight(geometry.boundingBox);
           let material = new Three.MeshLambertMaterial({
             color: 0x29d6d6,
+            side: Three.DoubleSide,
           }); //材质对象Material
           let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
           let group = new Three.Group();
@@ -355,9 +357,26 @@
           this.drawAxis(this.initialSight);
           this.resetModel();
           this.loading = false;
+          this.loadingPercent = 0;
         }, (xhr) => {
           this.loadingPercent = Number((xhr.loaded / xhr.total * 100).toFixed(2));
         })
+      },
+      createSurroundBox(data) {
+        let ballGeometry = new Three.SphereGeometry(Math.abs(data.max.x - data.min.x) * 0.05, 40, 40);
+        let ballMaterial = new Three.MeshLambertMaterial({
+          color: 0xffff00
+        });
+        let ballMesh = new Three.Mesh(ballGeometry, ballMaterial); //网格模型对象Mesh
+        ballMesh.position.x = (data.min.x + data.max.x) / 2;
+        ballMesh.position.y = (data.min.y + data.max.y) / 2;
+        ballMesh.position.z = (data.min.z + data.max.z) / 2;
+        let helper = new Three.Box3Helper( data, 0xffff00 );
+        let group = new Three.Group();
+        group.name = 'surroundBox';
+        group.visible = false;
+        group.add(helper, ballMesh);
+        this.scene.add(group);
       },
       resetModel() {
         this.k = this.width / this.height; //窗口宽高比
