@@ -109,6 +109,9 @@
         <button @click="showHide('surroundBox')">
           <i class="iconfont icon-box"></i>
         </button>
+        <button @click="() => this.coneFormVisible = true">
+          <i class="iconfont icon-cone"></i>
+        </button>
       </div>
     </div>
     <div class="left">
@@ -145,6 +148,56 @@
     <div v-if="loading" id="load-mask">
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
+    <a-modal v-model="coneFormVisible" title="圆锥参数配置" @ok="handleConeOk" :maskClosable="false">
+      <a-form :form="coneForm" :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }">
+        <a-form-item label="顶部半径">
+          <a-input
+                  placeholder="输入顶部半径"
+                  v-decorator="['radiusTop', { rules: [{ required: true, message: '请输入顶部半径!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="底部半径">
+          <a-input
+                  placeholder="输入底部半径"
+                  v-decorator="['radiusBottom', { rules: [{ required: true, message: '请输入底部半径!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="柱体高度">
+          <a-input
+                  placeholder="输入高度"
+                  v-decorator="['height', { rules: [{ required: true, message: '请输入高度!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="圆截面密度">
+          <a-input
+                  placeholder="输入圆截面密度"
+                  v-decorator="['radiusSegments', { rules: [{ required: true, message: '输入圆截面密度!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="竖直方向密度">
+          <a-input
+                  placeholder="输入竖直方向密度"
+                  v-decorator="['heightSegments', { rules: [{ required: true, message: '输入竖直方向密度!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="是否打开">
+          <a-select
+                  v-decorator="[
+          'openEnded',
+          { rules: [{ required: true, message: '请选择打开状态!' }] },
+        ]"
+                  placeholder="选择柱体打开状态"
+          >
+            <a-select-option value="1">
+              是
+            </a-select-option>
+            <a-select-option value="0">
+              否
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -175,6 +228,16 @@
         initialSight: null, // 初始化模型视野
         loading: false, // 是否加载中
         loadingPercent: 0, // 加载倒计时
+        coneFormVisible: false, // 圆柱参数表单
+        coneForm: this.$form.createForm(this, {name: 'coneForm'}),
+        cylinderGeometryParameter: { //
+          radiusTop: 20, // 顶部半径
+          radiusBottom: 20, // 底部半径
+          height: 100, // 高度
+          radiusSegments: 8, // 圆截面分段数
+          heightSegments: 1, // 竖直方向分段数
+          openEnded: false, // 圆柱体顶部或底部是否打开
+        },
       }
     },
     mounted() {
@@ -298,7 +361,7 @@
         this.render();
       },
       showHide(name) {
-        if(this.scene.getObjectByName(name)) {
+        if (this.scene.getObjectByName(name)) {
           this.scene.getObjectByName(name).visible = !this.scene.getObjectByName(name).visible;
           this.render();
         }
@@ -342,11 +405,13 @@
         loader.load('http://10.11.28.195:8000/' + name + '.stl', (geometry) => {
           // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
           geometry.computeBoundingBox();
+          console.log(geometry)
           this.createSurroundBox(geometry.boundingBox);
           this.initialSight = this.computeSight(geometry.boundingBox);
           let material = new Three.MeshLambertMaterial({
             color: 0x29d6d6,
             side: Three.DoubleSide,
+            wireframe: true,
           }); //材质对象Material
           let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
           let group = new Three.Group();
@@ -371,7 +436,7 @@
         ballMesh.position.x = (data.min.x + data.max.x) / 2;
         ballMesh.position.y = (data.min.y + data.max.y) / 2;
         ballMesh.position.z = (data.min.z + data.max.z) / 2;
-        let helper = new Three.Box3Helper( data, 0xffff00 );
+        let helper = new Three.Box3Helper(data, 0xffff00);
         let group = new Three.Group();
         group.name = 'surroundBox';
         group.visible = false;
@@ -389,7 +454,39 @@
         this.camera.lookAt(this.scene.position); //设置相机方向(指向的场景对象)
         this.camera.updateProjectionMatrix();
         this.render();
-      }
+      },
+      makeCone() {
+        this.scene.remove(this.scene.getObjectByName('cone'));
+        const {radiusTop, radiusBottom, height, radiusSegments, heightSegments,  openEnded} = this.cylinderGeometryParameter;
+        let geometry = new Three.CylinderGeometry(radiusTop, radiusBottom, height, radiusSegments, heightSegments,  openEnded);
+        let cylinder = new Three.Mesh(geometry, new Three.MeshLambertMaterial({
+          color: 0xff0000,
+          wireframe: true,
+        }));
+        let group = new Three.Group();
+        group.name = 'cone';
+        group.add(cylinder);
+        this.scene.add(group);
+        this.render();
+      },
+      // 提交圆柱表单
+      handleConeOk() {
+        this.coneForm.validateFields((err, values) => {
+          if (!err) {
+            Object.assign(this.cylinderGeometryParameter, {
+              radiusTop: Number(values.radiusTop),
+              radiusBottom: Number(values.radiusBottom),
+              height: Number(values.height),
+              radiusSegments: Number(values.radiusSegments),
+              heightSegments: Number(values.heightSegments),
+              openEnded: values.openEnded === '1',
+            });
+            this.makeCone();
+            this.coneFormVisible = false;
+            // this.coneForm.resetFields();
+          }
+        });
+      },
     }
   }
 </script>
