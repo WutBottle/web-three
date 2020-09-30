@@ -339,7 +339,7 @@
         this.removeGroup();
         this.loading = true;
         let loader = new STLLoader();
-        loader.load('http://192.168.1.6:8000/' + name + '.stl', (geometry) => {
+        loader.load('http://10.11.28.195:8000/' + name + '.stl', (geometry) => {
           // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
           geometry.computeBoundingBox();
           this.createSurroundBox(geometry.boundingBox);
