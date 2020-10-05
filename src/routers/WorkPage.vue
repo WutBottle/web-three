@@ -112,6 +112,7 @@
         <button @click="() => this.coneFormVisible = true">
           <i class="iconfont icon-cone"></i>
         </button>
+        <input ref="filElem" type="file" @change="readTXT">
       </div>
     </div>
     <div class="left">
@@ -204,7 +205,7 @@
 <script>
   import * as Three from 'three';
   import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
-  import {STLLoader} from 'three/examples/jsm/loaders/STLLoader'
+  import {STLLoader} from 'three/examples/jsm/loaders/STLLoader';
 
   export default {
     name: "WorkPage",
@@ -244,9 +245,34 @@
       this.initialScene();
       window.onresize = () => {
         this.handleReset(); // 处理页面放缩
-      }
+      };
     },
     methods: {
+      readTXT() {
+        const inputFile = this.$refs.filElem.files[0];
+        const reader = new FileReader();
+        reader.readAsText(inputFile,'utf8'); // input.files[0]为第一个文件
+        reader.onload = ()=>{
+          const snsArr = reader.result.split(/[(\r\n)\r\n]+/); // 根据换行分割
+          let pointsArray = [];
+          snsArr.forEach(item => {
+            let [x, y, z] = item.split(' ');
+            pointsArray.push(new Three.Vector3(Number(x), Number(y), Number(z)))
+          });
+          this.drawCurve(pointsArray);
+        }
+      },
+      drawCurve(inputPoints) {
+        //Create a closed wavey loop
+        let curve = new Three.CatmullRomCurve3(inputPoints, true);
+        let points = curve.getPoints( 50 );
+        let geometry = new Three.BufferGeometry().setFromPoints( points );
+        let material = new Three.LineBasicMaterial( { color : 0xff0000 } );
+// Create the final object to add to the scene
+        let curveObject = new Three.Line( geometry, material );
+        this.scene.add(curveObject);
+        this.render();
+      },
       handleChange(value) {
         this.loaderSTL(value);
       },
@@ -402,10 +428,9 @@
         this.removeGroup();
         this.loading = true;
         let loader = new STLLoader();
-        loader.load('http://10.11.28.195:8000/' + name + '.stl', (geometry) => {
+        loader.load('http://192.168.1.6:8000/' + name + '.stl', (geometry) => {
           // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
           geometry.computeBoundingBox();
-          console.log(geometry)
           this.createSurroundBox(geometry.boundingBox);
           this.initialSight = this.computeSight(geometry.boundingBox);
           let material = new Three.MeshLambertMaterial({
@@ -487,6 +512,7 @@
           }
         });
       },
+
     }
   }
 </script>

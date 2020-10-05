@@ -22,5 +22,6 @@ module.exports = {
       .set('@api',resolve('src/api'))
       .set('@routers',resolve('src/routers'))
       .set('@js',resolve('src/js'))
+      .set('@data',resolve('src/data'))
   }
 };
