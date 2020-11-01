@@ -45,6 +45,10 @@
       top: 60px;
       width: 196px;
       bottom: 0;
+
+      .ant-tree-title {
+        color: #fff;
+      }
     }
 
     #webgl {
@@ -116,34 +120,13 @@
       </div>
     </div>
     <div class="left">
-      <a-menu
-              :default-selected-keys="['1']"
-              :default-open-keys="['sub1']"
-              mode="inline"
-              theme="dark"
-      >
-        <a-sub-menu key="slice">
-          <span slot="title"><span>slice</span></span>
-          <a-sub-menu key="layer">
-            <span slot="title"><span>layer</span></span>
-            <a-sub-menu key="chain">
-              <span slot="title"><span>chain</span></span>
-              <a-menu-item key="block1">
-                block1
-              </a-menu-item>
-              <a-menu-item key="block2">
-                block2
-              </a-menu-item>
-              <a-menu-item key="block3">
-                block3
-              </a-menu-item>
-              <a-menu-item key="block4">
-                block4
-              </a-menu-item>
-            </a-sub-menu>
-          </a-sub-menu>
-        </a-sub-menu>
-      </a-menu>
+      <a-tree
+              v-model="checkedKeys"
+              :auto-expand-parent="true"
+              :selected-keys="selectedKeys"
+              :tree-data="treeData"
+              @select="onTreeSelect"
+      />
     </div>
     <div id="webgl"></div>
     <div v-if="loading" id="load-mask">
@@ -206,6 +189,7 @@
   import * as Three from 'three';
   import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
   import {STLLoader} from 'three/examples/jsm/loaders/STLLoader';
+  const wasmC = require('@C_CPP/test.c');
 
   export default {
     name: "WorkPage",
@@ -239,6 +223,9 @@
           heightSegments: 1, // 竖直方向分段数
           openEnded: false, // 圆柱体顶部或底部是否打开
         },
+        checkedKeys: [],
+        selectedKeys: [],
+        treeData: [],
       }
     },
     mounted() {
@@ -246,6 +233,18 @@
       window.onresize = () => {
         this.handleReset(); // 处理页面放缩
       };
+      wasmC({
+        'global': {},
+        'env': {
+          'memoryBase': 0,
+          'tableBase': 0,
+          'memory': new WebAssembly.Memory({initial: 256}),
+          'table': new WebAssembly.Table({initial: 0, element: 'anyfunc'})
+        }}).then(result => {
+        const exports = result.instance.exports;
+        const add = exports.add;
+        console.log('C return value was',add(5, 8));
+      });
     },
     methods: {
       readTXT() {
@@ -254,23 +253,103 @@
         reader.readAsText(inputFile,'utf8'); // input.files[0]为第一个文件
         reader.onload = ()=>{
           const snsArr = reader.result.split(/[(\r\n)\r\n]+/); // 根据换行分割
-          let pointsArray = [];
-          snsArr.forEach(item => {
-            let [x, y, z] = item.split(' ');
-            pointsArray.push(new Three.Vector3(Number(x), Number(y), Number(z)))
-          });
-          this.drawCurve(pointsArray);
+          this.drawCurve(this.stringConvertArray(snsArr));
         }
       },
+      stringConvertArray(originalData) {
+        const SLength = Number(originalData.shift().split(' ')[1]);
+        let LIndex = -1, BIndex = -1, CIndex = -1, PIndex = -1, ans = new Array(SLength).fill([]);
+        originalData.forEach(item => {
+          if(item.includes('L')) {
+            LIndex++;
+            const BLength = Number(item.split(' ')[1]);
+            ans[LIndex] = new Array(BLength).fill([]);
+            BIndex = -1;
+            CIndex = -1;
+            PIndex = -1;
+          }else if(item.includes('B')) {
+            BIndex++;
+            const CLength = Number(item.split(' ')[1]);
+            ans[LIndex][BIndex] = new Array(CLength).fill([]);
+            CIndex = -1;
+            PIndex = -1;
+          }else if(item.includes('C')) {
+            CIndex++;
+            const PLength = Number(item.split(' ')[1]);
+            ans[LIndex][BIndex][CIndex] = new Array(PLength);
+          }else {
+            PIndex++;
+            const [x,y,z] = item.split(' ');
+            if(!isNaN(Number(x)) && !isNaN(Number(y)) && !isNaN(Number(z))) {
+              ans[LIndex][BIndex][CIndex][PIndex]= [Number(x), Number(y), Number(z)];
+            }
+          }
+        });
+        return ans;
+      },
+      traverseScene(source, treeData, fatherKey) {
+        for (let key in source) {
+          if(source[key] instanceof Three.Group) {
+            const currentName = source[key].name.split('-').pop();
+            const currentKey = fatherKey ? fatherKey + '-' + currentName : currentName;
+            if(source[key].children.length) {
+              treeData.push({
+                title: currentName,
+                key: currentKey,
+                children: [],
+              });
+              const currentIndex = treeData.findIndex(value => value.title === currentName);
+              this.traverseScene(source[key].children, treeData[currentIndex].children, treeData[currentIndex].key);
+            }else {
+              treeData.push({
+                title: currentName,
+                key: currentKey,
+              });
+            }
+          }
+        }
+      },
+      // 生成菜单树
+      createTree() {
+        this.traverseScene(this.scene.children, this.treeData, ''); // 遍历scene进行控制
+      },
       drawCurve(inputPoints) {
-        //Create a closed wavey loop
-        let curve = new Three.CatmullRomCurve3(inputPoints, true);
-        let points = curve.getPoints( 50 );
-        let geometry = new Three.BufferGeometry().setFromPoints( points );
-        let material = new Three.LineBasicMaterial( { color : 0xff0000 } );
-// Create the final object to add to the scene
-        let curveObject = new Three.Line( geometry, material );
-        this.scene.add(curveObject);
+        this.removeGroup();
+        this.drawGrid();
+        this.drawAxis();
+        let SliceGroup = new Three.Group();
+        SliceGroup.name = 'slice';
+        inputPoints.forEach((LItem, LIndex) => {
+          let LayerGroup = new Three.Group();
+          LayerGroup.name = SliceGroup.name + '-' + 'layer' + LIndex;
+          SliceGroup.add(LayerGroup);
+          LItem.forEach((BItem, BIndex) => {
+            let BlockGroup = new Three.Group();
+            BlockGroup.name = LayerGroup.name + '-' + 'block' + BIndex;
+            LayerGroup.add(BlockGroup);
+            BItem.forEach((CItem, CIndex) => {
+              if(CItem.length) { // 判断Chain内部是否有点集
+                let ChainGroup = new Three.Group();
+                ChainGroup.name = BlockGroup.name + '-' + 'chain' + CIndex;
+                BlockGroup.add(ChainGroup);
+                let pointArray = [];
+                CItem.forEach(item => {
+                  pointArray.push(new Three.Vector3(item[0], item[1], item[2]));
+                });
+                //Create a closed wavey loop
+                let curve = new Three.CatmullRomCurve3(pointArray, false);
+                let points = curve.getPoints( 10 );
+                let geometry = new Three.BufferGeometry().setFromPoints(points);
+                let material = new Three.LineBasicMaterial({color: 0xff0000});
+                // Create the final object to add to the scene
+                let curveObject = new Three.Line( geometry, material );
+                ChainGroup.add(curveObject);
+              }
+            })
+          })
+        });
+        this.scene.add(SliceGroup);
+        this.createTree();
         this.render();
       },
       handleChange(value) {
@@ -428,7 +507,7 @@
         this.removeGroup();
         this.loading = true;
         let loader = new STLLoader();
-        loader.load('http://192.168.1.6:8000/' + name + '.stl', (geometry) => {
+        loader.load('http://10.11.30.123:8000/' + name + '.stl', (geometry) => {
           // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
           geometry.computeBoundingBox();
           this.createSurroundBox(geometry.boundingBox);
@@ -512,7 +591,11 @@
           }
         });
       },
-
+      // 选择展示哪个层级
+      onTreeSelect(selectedKeys, info) {
+        this.checkedKeys = selectedKeys;
+        this.showHide(info.selectedNodes[0].key);
+      }
     }
   }
 </script>
