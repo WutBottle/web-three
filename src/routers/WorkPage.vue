@@ -442,6 +442,7 @@ export default {
       this.camera.bottom = -this.s;
       this.camera.updateProjectionMatrix();
       this.render();
+      this.animationDrawLine();
     },
     handleNarrow() {
       this.s *= 1.1;
@@ -583,6 +584,74 @@ export default {
       this.checkedKeys = selectedKeys;
       this.showHide(info.selectedNodes[0].key);
     },
+    // 动画绘制线
+    animationDrawLine() {
+      let curve = new Three.CatmullRomCurve3([
+        new Three.Vector3(-600, 0, 300),
+        new Three.Vector3(-300, 300, 0),
+        new Three.Vector3(0, 0, 0),
+        new Three.Vector3(300, 300, 0),
+        new Three.Vector3(600, 0, -300)
+      ], false/*是否闭合*/);
+
+      let tubeGeometry = new Three.TubeGeometry(curve, 100, 1, 100, false);
+      let tubeMaterial = new Three.MeshBasicMaterial({color: 0xbbff00, wireframe: false})
+      let tube = new Three.Mesh(tubeGeometry, tubeMaterial);
+      this.scene.add(tube);
+
+      let box = new Three.SphereGeometry(50, 20, 20);
+      let material = new Three.MeshBasicMaterial({
+        color: 0x7777ff
+      }); //材质对象
+      let mesh = new Three.Mesh(box, material);
+      this.scene.add(mesh);
+      mesh.position.set(-600, 0, 300)
+      this.scene.add(mesh);
+
+      let points = curve.getPoints(100);
+      // 声明一个数组用于存储时间序列
+      let arr = [];
+      for (let i = 0; i < 101; i++) {
+        arr.push(i);
+      }
+      // 生成一个时间序列
+      let times = new Float32Array(arr);
+
+      let posArr = [];
+      points.forEach(elem => {
+        posArr.push(elem.x, elem.y, elem.z)
+      });
+      // 创建一个和时间序列相对应的位置坐标系列
+      let values = new Float32Array(posArr);
+      // 创建一个帧动画的关键帧数据，曲线上的位置序列对应一个时间序列
+      let posTrack = new Three.KeyframeTrack('.position', times, values);
+      let duration = 101;
+      let clip = new Three.AnimationClip("default", duration, [posTrack]);
+      let mixer = new Three.AnimationMixer(mesh);
+      let AnimationAction = mixer.clipAction(clip);
+      AnimationAction.timeScale = 10; // 调节播放速度
+      AnimationAction.play();
+
+      let clock = new Three.Clock();
+      const renderA = () => {
+        this.render();
+        requestAnimationFrame(renderA);
+        // 更新帧动画的时间
+        mixer.update(clock.getDelta());
+      }
+      renderA();
+      // let _i = 0;
+      // setTimeout(() => {
+      //   setInterval(() => {
+      //     _pointsBuf.push(points[_i].x, points[_i].y, points[_i].z)
+      //     _vertices = new Float32Array(_pointsBuf)
+      //     _geometry.setAttribute('position', new Three.BufferAttribute(_vertices, 3));
+      //     _i++;
+      //     if(_i>3000-1) _i=0
+      //   }, 10);
+      //   this.render();
+      // }, 3000);
+    }
   }
 }
 </script>
