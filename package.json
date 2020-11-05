@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "ant-design-vue": "^1.6.5",
+    "benchmark": "^2.1.4",
     "core-js": "^3.6.5",
+    "lodash": "^4.17.20",
     "normalize.css": "^8.0.1",
     "three": "^0.120.1",
     "vue": "^2.6.11"

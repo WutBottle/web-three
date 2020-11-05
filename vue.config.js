@@ -33,9 +33,10 @@ module.exports = {
       }, {
         loader: 'c-cpp-modules-webpack-loader',
         options: {
-          compiller: '-Os -s WASM=1 -s SIDE_MODULE=1'
+          compiler: '-Os -s WASM=1 -s SIDE_MODULE=1'
         }
       }]
     })
+    config.module.noParse = /benchmark/
   }
 };
