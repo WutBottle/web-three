@@ -640,17 +640,6 @@ export default {
         mixer.update(clock.getDelta());
       }
       renderA();
-      // let _i = 0;
-      // setTimeout(() => {
-      //   setInterval(() => {
-      //     _pointsBuf.push(points[_i].x, points[_i].y, points[_i].z)
-      //     _vertices = new Float32Array(_pointsBuf)
-      //     _geometry.setAttribute('position', new Three.BufferAttribute(_vertices, 3));
-      //     _i++;
-      //     if(_i>3000-1) _i=0
-      //   }, 10);
-      //   this.render();
-      // }, 3000);
     }
   }
 }
