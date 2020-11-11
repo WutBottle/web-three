@@ -95,28 +95,62 @@
         </a-select-option>
       </a-select>
       <div class="operate-wrapper">
-        <button @click="resetModel">
-          <i class="iconfont icon-reset"></i>
-        </button>
-        <button @click="handleEnlarge">
-          <i class="iconfont icon-enlarge"></i>
-        </button>
-        <button @click="handleNarrow">
-          <i class="iconfont icon-narrow"></i>
-        </button>
-        <button @click="showHide('centerAxis')">
-          <i class="iconfont icon-axis"></i>
-        </button>
-        <button @click="showHide('bottomGrid')">
-          <i class="iconfont icon-grid"></i>
-        </button>
-        <button @click="showHide('surroundBox')">
-          <i class="iconfont icon-box"></i>
-        </button>
-        <button @click="() => this.coneFormVisible = true">
-          <i class="iconfont icon-cone"></i>
-        </button>
-        <input ref="filElem" type="file" @change="readTXT">
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>回中</span>
+          </template>
+          <button @click="resetModel">
+            <i class="iconfont icon-reset"></i>
+          </button>
+        </a-tooltip>
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>放大</span>
+          </template>
+          <button @click="handleEnlarge">
+            <i class="iconfont icon-enlarge"></i>
+          </button>
+        </a-tooltip>
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>缩小</span>
+          </template>
+          <button @click="handleNarrow">
+            <i class="iconfont icon-narrow"></i>
+          </button>
+        </a-tooltip>
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>坐标轴</span>
+          </template>
+          <button @click="showHide('centerAxis')">
+            <i class="iconfont icon-axis"></i>
+          </button>
+        </a-tooltip>
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>底部网格</span>
+          </template>
+          <button @click="showHide('bottomGrid')">
+            <i class="iconfont icon-grid"></i>
+          </button>
+        </a-tooltip>
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>包络盒</span>
+          </template>
+          <button @click="showHide('surroundBox')">
+            <i class="iconfont icon-box"></i>
+          </button>
+        </a-tooltip>
+        <a-tooltip placement="top">
+          <template slot="title">
+            <span>切片</span>
+          </template>
+          <button @click="() => this.sliceFormVisible = true">
+            <i class="iconfont icon-slice"></i>
+          </button>
+        </a-tooltip>
       </div>
     </div>
     <div class="left">
@@ -132,55 +166,77 @@
     <div v-if="loading" id="load-mask">
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
-    <a-modal v-model="coneFormVisible" title="圆锥参数配置" @ok="handleConeOk" :maskClosable="false">
-      <a-form :form="coneForm" :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }">
-        <a-form-item label="顶部半径">
-          <a-input
-              placeholder="输入顶部半径"
-              v-decorator="['radiusTop', { rules: [{ required: true, message: '请输入顶部半径!' }] }]"
-          />
-        </a-form-item>
-        <a-form-item label="底部半径">
-          <a-input
-              placeholder="输入底部半径"
-              v-decorator="['radiusBottom', { rules: [{ required: true, message: '请输入底部半径!' }] }]"
-          />
-        </a-form-item>
-        <a-form-item label="柱体高度">
-          <a-input
-              placeholder="输入高度"
-              v-decorator="['height', { rules: [{ required: true, message: '请输入高度!' }] }]"
-          />
-        </a-form-item>
-        <a-form-item label="圆截面密度">
-          <a-input
-              placeholder="输入圆截面密度"
-              v-decorator="['radiusSegments', { rules: [{ required: true, message: '输入圆截面密度!' }] }]"
-          />
-        </a-form-item>
-        <a-form-item label="竖直方向密度">
-          <a-input
-              placeholder="输入竖直方向密度"
-              v-decorator="['heightSegments', { rules: [{ required: true, message: '输入竖直方向密度!' }] }]"
-          />
-        </a-form-item>
-        <a-form-item label="是否打开">
-          <a-select
-              v-decorator="[
-          'openEnded',
-          { rules: [{ required: true, message: '请选择打开状态!' }] },
-        ]"
-              placeholder="选择柱体打开状态"
-          >
-            <a-select-option value="1">
-              是
-            </a-select-option>
-            <a-select-option value="0">
-              否
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-      </a-form>
+    <a-modal v-model="sliceFormVisible" title="切片" @ok="handleConeOk" cancelText="取消" okText="确认" :maskClosable="false">
+      <a-tabs v-model="sliceTabsKey">
+        <a-tab-pane key="flat">
+          <span slot="tab">
+            <i class="iconfont icon-flat-slice"></i>
+            平面切片
+          </span>
+          <a-form :form="flatForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
+            <a-form-item label="起始切片高度">
+              <a-input
+                  placeholder="输入起始切片高度"
+                  v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="终止切片高度">
+              <a-input
+                  placeholder="输入终止切片高度"
+                  v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="层厚">
+              <a-input
+                  placeholder="输入层厚"
+                  v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="绘制颜色">
+              <colorPicker
+                  v-model="color"
+              />
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+        <a-tab-pane key="cone">
+          <span slot="tab">
+            <i class="iconfont icon-cone"></i>
+            锥面切片
+          </span>
+          <a-form :form="coneForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
+            <a-form-item label="起始切片高度">
+              <a-input
+                  placeholder="输入起始切片高度"
+                  v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="起始切片半径">
+              <a-input
+                  placeholder="输入起始切片半径"
+                  v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="终止切片高度">
+              <a-input
+                  placeholder="输入终止切片高度"
+                  v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="层厚">
+              <a-input
+                  placeholder="输入层厚"
+                  v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="绘制颜色">
+              <colorPicker
+                  v-model="color"
+              />
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+      </a-tabs>
     </a-modal>
   </div>
 </template>
@@ -190,6 +246,7 @@ import * as Three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import {STLLoader} from 'three/examples/jsm/loaders/STLLoader';
 
+const modelUrl = 'http://10.224.120.179:8010/';
 export default {
   name: "WorkPage",
   data() {
@@ -212,8 +269,9 @@ export default {
       initialSight: null, // 初始化模型视野
       loading: false, // 是否加载中
       loadingPercent: 0, // 加载倒计时
-      coneFormVisible: false, // 圆柱参数表单
-      coneForm: this.$form.createForm(this, {name: 'coneForm'}),
+      sliceFormVisible: false, // 圆柱参数表单
+      coneForm: this.$form.createForm(this, {name: 'coneForm'}), // 锥面切片表单
+      flatForm: this.$form.createForm(this, {name: 'flatForm'}), // 平面切片表单
       cylinderGeometryParameter: { //
         radiusTop: 20, // 顶部半径
         radiusBottom: 20, // 底部半径
@@ -225,6 +283,8 @@ export default {
       checkedKeys: [],
       selectedKeys: [],
       treeData: [],
+      sliceTabsKey: 'flat', // 切片信息面板
+      color: '#ff0000', // 选择
     }
   },
   mounted() {
@@ -234,6 +294,7 @@ export default {
     };
   },
   methods: {
+    // 文件读取入口
     readTXT() {
       const inputFile = this.$refs.filElem.files[0];
       const reader = new FileReader();
@@ -442,7 +503,6 @@ export default {
       this.camera.bottom = -this.s;
       this.camera.updateProjectionMatrix();
       this.render();
-      this.animationDrawLine();
     },
     handleNarrow() {
       this.s *= 1.1;
@@ -495,7 +555,7 @@ export default {
       this.removeGroup();
       this.loading = true;
       let loader = new STLLoader();
-      loader.load('http://10.11.30.123:8000/' + name + '.stl', (geometry) => {
+      loader.load(modelUrl + name + '.stl', (geometry) => {
         // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
         geometry.computeBoundingBox();
         this.createSurroundBox(geometry.boundingBox);
@@ -549,10 +609,10 @@ export default {
     },
     makeCone() {
       this.scene.remove(this.scene.getObjectByName('cone'));
-      const {radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded} = this.cylinderGeometryParameter;
+      const {radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded, color} = this.cylinderGeometryParameter;
       let geometry = new Three.CylinderGeometry(radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded);
       let cylinder = new Three.Mesh(geometry, new Three.MeshLambertMaterial({
-        color: 0xff0000,
+        color: color,
         wireframe: true,
       }));
       let group = new Three.Group();
@@ -561,20 +621,29 @@ export default {
       this.scene.add(group);
       this.render();
     },
-    // 提交圆柱表单
+    // 提交切片表单
     handleConeOk() {
-      this.coneForm.validateFields((err, values) => {
+      // 水平切片
+      this.sliceTabsKey === 'flat' && this.flatForm.validateFields((err, values) => {
+        if (!err) {
+          console.log(values)
+        }
+      })
+      // 椎体切片
+      this.sliceTabsKey === 'cone' && this.coneForm.validateFields((err, values) => {
         if (!err) {
           Object.assign(this.cylinderGeometryParameter, {
-            radiusTop: Number(values.radiusTop),
-            radiusBottom: Number(values.radiusBottom),
-            height: Number(values.height),
-            radiusSegments: Number(values.radiusSegments),
-            heightSegments: Number(values.heightSegments),
-            openEnded: values.openEnded === '1',
+            radiusTop: 0,
+            radiusBottom: Number(values.startRadius),
+            height: Number(values.endHeight - values.startHeight),
+            thick: Number(values.sliceThick),
+            color: this.color,
+            radiusSegments: 20,
+            heightSegments: 20,
+            openEnded: true,
           });
           this.makeCone();
-          this.coneFormVisible = false;
+          this.sliceFormVisible = false;
           // this.coneForm.resetFields();
         }
       });

@@ -2,6 +2,10 @@
   body {
     background: #555555;
     overflow: hidden;
+
+    .m-colorPicker .box{
+      position: fixed!important;
+    }
   }
 </style>
 

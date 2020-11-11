@@ -14,6 +14,7 @@
     "lodash": "^4.17.20",
     "normalize.css": "^8.0.1",
     "three": "^0.120.1",
+    "vcolorpicker": "^1.0.3",
     "vue": "^2.6.11"
   },
   "devDependencies": {
