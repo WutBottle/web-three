@@ -167,7 +167,7 @@
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
     <a-modal v-model="sliceFormVisible" title="切片" @ok="handleConeOk" cancelText="取消" okText="确认" :maskClosable="false">
-      <a-tabs v-model="sliceTabsKey">
+      <a-tabs v-model="sliceTabsKey" style="overflow: visible">
         <a-tab-pane key="flat">
           <span slot="tab">
             <i class="iconfont icon-flat-slice"></i>
