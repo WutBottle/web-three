@@ -1,22 +1,19 @@
 <style lang="scss">
-  body {
-    background: #555555;
-    overflow: hidden;
-  }
+body {
+  background: #555555;
+  overflow: hidden;
+}
 </style>
 
 <template>
   <div id="app">
-    <WorkPage/>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-  import WorkPage from "./routers/WorkPage";
+
 export default {
   name: 'App',
-  components: {
-    WorkPage,
-  }
 }
 </script>

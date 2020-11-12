@@ -18,7 +18,7 @@ module.exports = {
     config.resolve.alias
       .set('@', resolve('src'))
       .set('@assets',resolve('src/assets'))
-      .set('@components',resolve('src/components'))
+      .set('@components',resolve('src/routers/components'))
       .set('@api',resolve('src/api'))
       .set('@routers',resolve('src/routers'))
       .set('@js',resolve('src/js'))
