@@ -4,7 +4,7 @@ import VueRouter from 'vue-router'
 import 'normalize.css/normalize.css'
 import { Button, Menu, Icon, Select, Spin, Progress, Modal, Form, Input, Tree, Tooltip, Tabs} from 'ant-design-vue'
 import vcolorpicker from 'vcolorpicker'
-import router from './routers'
+import routers from './routers'
 Vue.use(vcolorpicker)
 Vue.use(VueRouter)
 
@@ -24,5 +24,5 @@ Vue.use(Tabs);
 
 new Vue({
   render: h => h(App),
-  router: router,
+  router: routers,
 }).$mount('#app');

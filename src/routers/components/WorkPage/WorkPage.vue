@@ -76,6 +76,12 @@
       margin: -10% 0 0 -25%;
     }
   }
+
+
+}
+
+.m-colorPicker .box{
+  position: fixed!important;
 }
 </style>
 
@@ -167,7 +173,7 @@
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
     <a-modal v-model="sliceFormVisible" title="切片" @ok="handleConeOk" cancelText="取消" okText="确认" :maskClosable="false">
-      <a-tabs v-model="sliceTabsKey" style="overflow: visible">
+      <a-tabs v-model="sliceTabsKey">
         <a-tab-pane key="flat">
           <span slot="tab">
             <i class="iconfont icon-flat-slice"></i>
@@ -205,16 +211,16 @@
             锥面切片
           </span>
           <a-form :form="coneForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
-            <a-form-item label="起始切片高度">
-              <a-input
-                  placeholder="输入起始切片高度"
-                  v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
-              />
-            </a-form-item>
             <a-form-item label="起始切片半径">
               <a-input
                   placeholder="输入起始切片半径"
                   v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="起始切片高度">
+              <a-input
+                  placeholder="输入起始切片高度"
+                  v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
               />
             </a-form-item>
             <a-form-item label="终止切片高度">
@@ -245,6 +251,7 @@
 import * as Three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import {STLLoader} from 'three/examples/jsm/loaders/STLLoader';
+import {removeObject, makeCone, render} from '@js/drawFunction';
 
 const modelUrl = 'http://10.224.120.179:8010/';
 export default {
@@ -607,20 +614,6 @@ export default {
       this.camera.updateProjectionMatrix();
       this.render();
     },
-    makeCone() {
-      this.scene.remove(this.scene.getObjectByName('cone'));
-      const {radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded, color} = this.cylinderGeometryParameter;
-      let geometry = new Three.CylinderGeometry(radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded);
-      let cylinder = new Three.Mesh(geometry, new Three.MeshLambertMaterial({
-        color: color,
-        wireframe: true,
-      }));
-      let group = new Three.Group();
-      group.name = 'cone';
-      group.add(cylinder);
-      this.scene.add(group);
-      this.render();
-    },
     // 提交切片表单
     handleConeOk() {
       // 水平切片
@@ -633,6 +626,7 @@ export default {
       this.sliceTabsKey === 'cone' && this.coneForm.validateFields((err, values) => {
         if (!err) {
           Object.assign(this.cylinderGeometryParameter, {
+            startHeight: Number(values.startHeight),
             radiusTop: 0,
             radiusBottom: Number(values.startRadius),
             height: Number(values.endHeight - values.startHeight),
@@ -642,7 +636,9 @@ export default {
             heightSegments: 20,
             openEnded: true,
           });
-          this.makeCone();
+          removeObject(this.scene, 'cone')
+          makeCone(this.scene, 'cone', this.cylinderGeometryParameter);
+          render(this.scene, this.camera, this.renderer);
           this.sliceFormVisible = false;
           // this.coneForm.resetFields();
         }
