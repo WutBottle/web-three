@@ -80,8 +80,8 @@
 
 }
 
-.m-colorPicker .box{
-  position: fixed!important;
+.m-colorPicker .box {
+  position: fixed !important;
 }
 </style>
 
@@ -172,7 +172,7 @@
     <div v-if="loading" id="load-mask">
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
-    <a-modal v-model="sliceFormVisible" title="切片" @ok="handleConeOk" cancelText="取消" okText="确认" :maskClosable="false">
+    <a-modal v-model="sliceFormVisible" title="切片" @ok="handleSliceOk" cancelText="取消" okText="确认" :maskClosable="false">
       <a-tabs v-model="sliceTabsKey">
         <a-tab-pane key="flat">
           <span slot="tab">
@@ -249,21 +249,36 @@
 
 <script>
 import * as Three from 'three';
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import {STLLoader} from 'three/examples/jsm/loaders/STLLoader';
-import {removeObject, makeCone, render} from '@js/drawFunction';
+import {
+  removeObject,
+  makeCone,
+  render,
+  getScene,
+  drawTXTCurve,
+  removeGroup,
+  drawSTL,
+  initialScene,
+  handleReset,
+  handleEnlarge,
+  handleNarrow,
+  resetModel,
+  showHide
+} from '@js/drawFunction';
 
 const modelUrl = 'http://10.224.120.179:8010/';
 export default {
   name: "WorkPage",
   data() {
     return {
+      handleEnlarge,
+      handleNarrow,
+      resetModel,
+      showHide,
       currentModelName: '请选择模型',
-      scene: new Three.Scene(), // 场景对象
       camera: null, // 相机对象
       point: null, // 光源设置 点光源
       ambient: null, // 环境光
-      mesh: null, // 材质对象
       width: window.innerWidth - 200, //窗口宽度
       height: window.innerHeight - 60, //窗口高度
       k: null, // 窗口宽高比
@@ -295,9 +310,9 @@ export default {
     }
   },
   mounted() {
-    this.initialScene();
+    initialScene();
     window.onresize = () => {
-      this.handleReset(); // 处理页面放缩
+      handleReset(); // 处理页面放缩
     };
   },
   methods: {
@@ -308,9 +323,11 @@ export default {
       reader.readAsText(inputFile, 'utf8'); // input.files[0]为第一个文件
       reader.onload = () => {
         const snsArr = reader.result.split(/[(\r\n)\r\n]+/); // 根据换行分割
-        this.drawCurve(this.stringConvertArray(snsArr));
+        drawTXTCurve(this.stringConvertArray(snsArr));
+        this.createTree();
       }
     },
+    // string坐标信息读取为Array数组
     stringConvertArray(originalData) {
       const SLength = Number(originalData.shift().split(' ')[1]);
       let LIndex = -1, BIndex = -1, CIndex = -1, PIndex = -1, ans = new Array(SLength).fill([]);
@@ -342,6 +359,7 @@ export default {
       });
       return ans;
     },
+    // 遍历场景
     traverseScene(source, treeData, fatherKey) {
       for (let key in source) {
         if (source[key] instanceof Three.Group) {
@@ -366,256 +384,25 @@ export default {
     },
     // 生成菜单树
     createTree() {
-      this.traverseScene(this.scene.children, this.treeData, ''); // 遍历scene进行控制
-    },
-    drawCurve(inputPoints) {
-      this.removeGroup();
-      this.drawGrid();
-      this.drawAxis();
-      let SliceGroup = new Three.Group();
-      SliceGroup.name = 'slice';
-      inputPoints.forEach((LItem, LIndex) => {
-        let LayerGroup = new Three.Group();
-        LayerGroup.name = SliceGroup.name + '-' + 'layer' + LIndex;
-        SliceGroup.add(LayerGroup);
-        LItem.forEach((BItem, BIndex) => {
-          let BlockGroup = new Three.Group();
-          BlockGroup.name = LayerGroup.name + '-' + 'block' + BIndex;
-          LayerGroup.add(BlockGroup);
-          BItem.forEach((CItem, CIndex) => {
-            if (CItem.length) { // 判断Chain内部是否有点集
-              let ChainGroup = new Three.Group();
-              ChainGroup.name = BlockGroup.name + '-' + 'chain' + CIndex;
-              BlockGroup.add(ChainGroup);
-              let pointArray = [];
-              CItem.forEach(item => {
-                pointArray.push(new Three.Vector3(item[0], item[1], item[2]));
-              });
-              //Create a closed wavey loop
-              let curve = new Three.CatmullRomCurve3(pointArray, false);
-              let points = curve.getPoints(10);
-              let geometry = new Three.BufferGeometry().setFromPoints(points);
-              let material = new Three.LineBasicMaterial({color: 0xff0000});
-              // Create the final object to add to the scene
-              let curveObject = new Three.Line(geometry, material);
-              ChainGroup.add(curveObject);
-            }
-          })
-        })
-      });
-      this.scene.add(SliceGroup);
-      this.createTree();
-      this.render();
+      this.traverseScene(getScene().children, this.treeData, ''); // 遍历scene进行控制
     },
     handleChange(value) {
       this.loaderSTL(value);
     },
-    initialScene() {
-      this.initialLight();
-      this.initialCamera();
-      this.initialBG();
-      const fatherElement = document.getElementById('webgl');
-      fatherElement.appendChild(this.renderer.domElement); //webgl元素中插入canvas对象
-      this.drawAxis();
-      this.drawGrid();
-      this.orbitControls(); // 添加鼠标控制
-      this.render();
-    },
-    render() {
-      this.renderer.render(this.scene, this.camera);//执行渲染操作
-    },
-    // 添加鼠标控制
-    orbitControls() {
-      this.controls = new OrbitControls(this.camera, this.renderer.domElement);//创建控件对象
-      this.controls.enablePan = false; // 禁止右键拖拽
-      this.controls.minZoom = 0.5;
-      this.controls.maxZoom = 2; // 最大放大距离
-      this.renderer.domElement.removeAttribute("tabindex");
-      this.controls.addEventListener('change', this.render);
-    },
-    drawGrid(len = 800) {
-      this.gridGroup = new Three.Group();
-      let geometry = new Three.Geometry();
-      geometry.vertices.push(new Three.Vector3(-len, -len / 2, 0));
-      geometry.vertices.push(new Three.Vector3(len, -len / 2, 0));
-      let unitLen = 2 * len / 50;
-      for (let i = 0; i <= 50; i++) {
-        //画横线
-        let line1 = new Three.Line(geometry, new Three.LineBasicMaterial({color: 0xffffdd, opacity: 0.1}));
-        line1.position.z = (i * unitLen) - len;
-
-        let line2 = new Three.Line(geometry, new Three.LineBasicMaterial({color: 0xffffdd, opacity: 0.1}));
-        line2.position.x = (i * unitLen) - len;
-        line2.rotation.y = 90 * Math.PI / 180;   //转90度
-        this.gridGroup.name = 'bottomGrid';
-        this.gridGroup.add(line1, line2);
-      }
-      this.scene.add(this.gridGroup);
-    },
-    // 绘制坐标轴
-    drawAxis(size = 800) {
-      this.axisGroup = new Three.Group();
-      this.axisGroup.name = 'centerAxis';
-      //来自原点的方向。必须是单位向量
-      let dirX = new Three.Vector3(size, 0, 0);
-      let dirY = new Three.Vector3(0, size, 0);
-      let dirZ = new Three.Vector3(0, 0, size);
-      // 规格化方向向量(转换为长度为1的向量)
-      dirX.normalize();
-      dirY.normalize();
-      dirZ.normalize();
-      // 箭头开始的点
-      let origin = new Three.Vector3(0, 0, 0);
-      // 箭头的长度。默认值为1
-      let length = size;
-      // 颜色
-      let hexX = 0xff0000;
-      let hexY = 0x00ff00;
-      let hexZ = 0x0000ff;
-      // 箭头的长度。默认值为0.2 *length
-      let headLength = 0;
-      // 箭头宽度的长度。默认值为0.2 * headLength。
-      let headWidth = 0;
-      let arrowHelperX = new Three.ArrowHelper(dirX, origin, length, hexX, headLength, headWidth);
-      let arrowHelperY = new Three.ArrowHelper(dirY, origin, length, hexY, headLength, headWidth);
-      let arrowHelperZ = new Three.ArrowHelper(dirZ, origin, length, hexZ, headLength, headWidth);
-      this.axisGroup.add(arrowHelperX, arrowHelperY, arrowHelperZ);
-      this.axisGroup.name = 'centerAxis';
-      this.scene.add(this.axisGroup);
-    },
-    initialBG() {
-      this.renderer.setSize(this.width, this.height);//设置渲染区域尺寸
-      this.renderer.setClearColor(0x333333, 1); //设置背景颜色
-    },
-    initialCamera() {
-      // 相机设置
-      this.s = 1000;
-      this.k = this.width / this.height; //窗口宽高比
-      this.camera = new Three.OrthographicCamera(-this.s * this.k, this.s * this.k, this.s, -this.s, -5000, 5000);
-      this.camera.position.set(0, 0, 400); //设置相机位置
-      this.camera.lookAt(this.scene.position); //设置相机方向(指向的场景对象)
-    },
-    initialLight() {
-      this.point = new Three.PointLight(0xffffff);
-      this.ambient = new Three.AmbientLight(0x444444);
-      this.point.position.set(200, 100, 300); //点光源位置
-      this.scene.add(this.point); // 点光源添加到场景中
-      this.scene.add(this.ambient); // 环境光添加到场景中
-    },
-    handleEnlarge() {
-      this.s *= 0.9;
-      this.camera.left = -this.s * this.k;
-      this.camera.right = this.s * this.k;
-      this.camera.top = this.s;
-      this.camera.bottom = -this.s;
-      this.camera.updateProjectionMatrix();
-      this.render();
-    },
-    handleNarrow() {
-      this.s *= 1.1;
-      this.camera.left = -this.s * this.k;
-      this.camera.right = this.s * this.k;
-      this.camera.top = this.s;
-      this.camera.bottom = -this.s;
-      this.camera.updateProjectionMatrix();
-      this.render();
-    },
-    showHide(name) {
-      if (this.scene.getObjectByName(name)) {
-        this.scene.getObjectByName(name).visible = !this.scene.getObjectByName(name).visible;
-        this.render();
-      }
-    },
-    handleReset() {
-      this.width = window.innerWidth - 200;
-      this.height = window.innerHeight - 60;
-      this.renderer.setSize(this.width, this.height);
-      // 重置相机投影的相关参数
-      this.k = this.width / this.height;//窗口宽高比
-      this.camera.left = -this.s * this.k;
-      this.camera.right = this.s * this.k;
-      this.camera.top = this.s;
-      this.camera.bottom = -this.s;
-      // 渲染器执行render方法的时候会读取相机对象的投影矩阵属性projectionMatrix
-      // 但是不会每渲染一帧，就通过相机的属性计算投影矩阵(节约计算资源)
-      // 如果相机的一些属性发生了变化，需要执行updateProjectionMatrix ()方法更新相机的投影矩阵
-      this.camera.updateProjectionMatrix();
-      this.render();
-    },
-    removeGroup() {
-      let allChildren = this.scene.children;
-      for (let i = allChildren.length - 1; i >= 0; i--) {
-        if (allChildren[i] instanceof Three.Group) {
-          this.scene.remove(allChildren[i]);
-        }
-      }
-    },
-    // 计算合适视野
-    computeSight(data) {
-      let temp = new Array(3);
-      temp[0] = data.max.x - data.min.x;
-      temp[1] = data.max.y - data.min.y;
-      temp[2] = data.max.z - data.min.z;
-      return Math.floor(Math.max(...temp) * 1.1);
-    },
     loaderSTL(name) {
-      this.removeGroup();
+      removeGroup();
       this.loading = true;
       let loader = new STLLoader();
       loader.load(modelUrl + name + '.stl', (geometry) => {
-        // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
-        geometry.computeBoundingBox();
-        this.createSurroundBox(geometry.boundingBox);
-        this.initialSight = this.computeSight(geometry.boundingBox);
-        let material = new Three.MeshLambertMaterial({
-          color: 0x29d6d6,
-          side: Three.DoubleSide,
-          wireframe: true,
-        }); //材质对象Material
-        let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
-        let group = new Three.Group();
-        group.name = name;
-        group.add(mesh);
-        this.scene.add(group); //网格模型添加到场景中
-        this.drawGrid(this.initialSight);
-        this.drawAxis(this.initialSight);
-        this.resetModel();
+        drawSTL(geometry, name);
         this.loading = false;
         this.loadingPercent = 0;
       }, (xhr) => {
         this.loadingPercent = Number((xhr.loaded / xhr.total * 100).toFixed(2));
       })
     },
-    createSurroundBox(data) {
-      let ballGeometry = new Three.SphereGeometry(Math.abs(data.max.x - data.min.x) * 0.05, 40, 40);
-      let ballMaterial = new Three.MeshLambertMaterial({
-        color: 0xffff00
-      });
-      let ballMesh = new Three.Mesh(ballGeometry, ballMaterial); //网格模型对象Mesh
-      ballMesh.position.x = (data.min.x + data.max.x) / 2;
-      ballMesh.position.y = (data.min.y + data.max.y) / 2;
-      ballMesh.position.z = (data.min.z + data.max.z) / 2;
-      let helper = new Three.Box3Helper(data, 0xffff00);
-      let group = new Three.Group();
-      group.name = 'surroundBox';
-      group.visible = false;
-      group.add(helper, ballMesh);
-      this.scene.add(group);
-    },
-    resetModel() {
-      this.k = this.width / this.height; //窗口宽高比
-      this.s = this.initialSight || 1000;
-      this.camera.left = -this.s * this.k;
-      this.camera.right = this.s * this.k;
-      this.camera.top = this.s;
-      this.camera.bottom = -this.s;
-      this.camera.position.set(0, 0, 400); //设置相机位置
-      this.camera.lookAt(this.scene.position); //设置相机方向(指向的场景对象)
-      this.camera.updateProjectionMatrix();
-      this.render();
-    },
-    // 提交切片表单
-    handleConeOk() {
+    // 生成切片信息
+    handleSliceOk() {
       // 水平切片
       this.sliceTabsKey === 'flat' && this.flatForm.validateFields((err, values) => {
         if (!err) {
@@ -636,9 +423,9 @@ export default {
             heightSegments: 20,
             openEnded: true,
           });
-          removeObject(this.scene, 'cone')
-          makeCone(this.scene, 'cone', this.cylinderGeometryParameter);
-          render(this.scene, this.camera, this.renderer);
+          removeObject('cone')
+          makeCone('cone', this.cylinderGeometryParameter);
+          render();
           this.sliceFormVisible = false;
           // this.coneForm.resetFields();
         }
@@ -649,63 +436,6 @@ export default {
       this.checkedKeys = selectedKeys;
       this.showHide(info.selectedNodes[0].key);
     },
-    // 动画绘制线
-    animationDrawLine() {
-      let curve = new Three.CatmullRomCurve3([
-        new Three.Vector3(-600, 0, 300),
-        new Three.Vector3(-300, 300, 0),
-        new Three.Vector3(0, 0, 0),
-        new Three.Vector3(300, 300, 0),
-        new Three.Vector3(600, 0, -300)
-      ], false/*是否闭合*/);
-
-      let tubeGeometry = new Three.TubeGeometry(curve, 100, 1, 100, false);
-      let tubeMaterial = new Three.MeshBasicMaterial({color: 0xbbff00, wireframe: false})
-      let tube = new Three.Mesh(tubeGeometry, tubeMaterial);
-      this.scene.add(tube);
-
-      let box = new Three.SphereGeometry(50, 20, 20);
-      let material = new Three.MeshBasicMaterial({
-        color: 0x7777ff
-      }); //材质对象
-      let mesh = new Three.Mesh(box, material);
-      this.scene.add(mesh);
-      mesh.position.set(-600, 0, 300)
-      this.scene.add(mesh);
-
-      let points = curve.getPoints(100);
-      // 声明一个数组用于存储时间序列
-      let arr = [];
-      for (let i = 0; i < 101; i++) {
-        arr.push(i);
-      }
-      // 生成一个时间序列
-      let times = new Float32Array(arr);
-
-      let posArr = [];
-      points.forEach(elem => {
-        posArr.push(elem.x, elem.y, elem.z)
-      });
-      // 创建一个和时间序列相对应的位置坐标系列
-      let values = new Float32Array(posArr);
-      // 创建一个帧动画的关键帧数据，曲线上的位置序列对应一个时间序列
-      let posTrack = new Three.KeyframeTrack('.position', times, values);
-      let duration = 101;
-      let clip = new Three.AnimationClip("default", duration, [posTrack]);
-      let mixer = new Three.AnimationMixer(mesh);
-      let AnimationAction = mixer.clipAction(clip);
-      AnimationAction.timeScale = 10; // 调节播放速度
-      AnimationAction.play();
-
-      let clock = new Three.Clock();
-      const renderA = () => {
-        this.render();
-        requestAnimationFrame(renderA);
-        // 更新帧动画的时间
-        mixer.update(clock.getDelta());
-      }
-      renderA();
-    }
   }
 }
 </script>
