@@ -87,6 +87,7 @@
 
 <template>
   <div class="WorkPage">
+    <div id="statsWrapper"></div>
     <div class="top">
       <a-select class="select" v-model="currentModelName" placeholder="请选择模型" style="width: 120px"
                 @change="handleChange">
@@ -172,7 +173,8 @@
     <div v-if="loading" id="load-mask">
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
     </div>
-    <a-modal v-model="sliceFormVisible" title="切片" @ok="handleSliceOk" cancelText="取消" okText="确认" :maskClosable="false">
+    <a-modal v-model="sliceFormVisible" title="切片" @ok="handleSliceOk" cancelText="取消" okText="确认"
+             :maskClosable="false">
       <a-tabs v-model="sliceTabsKey">
         <a-tab-pane key="flat">
           <span slot="tab">
@@ -251,6 +253,7 @@
 import * as Three from 'three';
 import {STLLoader} from 'three/examples/jsm/loaders/STLLoader';
 import {
+  statsInit,
   removeObject,
   makeCone,
   render,
@@ -263,7 +266,7 @@ import {
   handleEnlarge,
   handleNarrow,
   resetModel,
-  showHide
+  showHide,
 } from '@js/drawFunction';
 
 const modelUrl = 'http://10.224.120.179:8010/';
@@ -311,6 +314,7 @@ export default {
   },
   mounted() {
     initialScene();
+    statsInit();
     window.onresize = () => {
       handleReset(); // 处理页面放缩
     };

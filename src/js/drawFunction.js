@@ -1,5 +1,6 @@
 import * as Three from 'three';
-import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
+import Stats from 'stats.js';
 
 let scene = new Three.Scene(); // 场景对象
 let camera = null; // 相机对象
@@ -14,6 +15,25 @@ let controls = {}; // 创建控件对象
 let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
+
+/** 添加帧数监听 **/
+export const statsInit = () => {
+  const stats = new Stats();
+  stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+  const wrapperDom = document.getElementById('statsWrapper');
+  wrapperDom.appendChild( stats.dom );
+  stats.dom.style.left = 'auto';
+  stats.dom.style.right = '0';
+  stats.dom.style.top = '60px';
+  function animate() {
+    stats.begin();
+    // monitored code goes here
+    stats.end();
+    requestAnimationFrame( animate );
+  }
+  requestAnimationFrame( animate );
+}
+
 
 /** 获取场景对象scene **/
 export const getScene = () => {
