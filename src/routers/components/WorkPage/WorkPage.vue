@@ -158,6 +158,7 @@
             <i class="iconfont icon-slice"></i>
           </button>
         </a-tooltip>
+<!--        <input type="file" ref="filElem" @change="readTXT">-->
       </div>
     </div>
     <div class="left">
