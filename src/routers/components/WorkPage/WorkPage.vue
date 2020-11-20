@@ -268,6 +268,7 @@ import {
   handleNarrow,
   resetModel,
   showHide,
+  makeHorizontalSlice,
 } from '@js/drawFunction';
 
 const modelUrl = 'http://10.224.120.179:8010/';
@@ -280,19 +281,6 @@ export default {
       resetModel,
       showHide,
       currentModelName: '请选择模型',
-      camera: null, // 相机对象
-      point: null, // 光源设置 点光源
-      ambient: null, // 环境光
-      width: window.innerWidth - 200, //窗口宽度
-      height: window.innerHeight - 60, //窗口高度
-      k: null, // 窗口宽高比
-      s: null, // 三维场景显示范围控制系数，系数越大，显示的范围越大
-      renderer: new Three.WebGLRenderer(), // 创建渲染器对象
-      controls: {}, //创建控件对象
-      selectedObject: null, // 选择物体
-      gridGroup: null, // 网格组
-      axisGroup: null, // 中心坐标组
-      initialSight: null, // 初始化模型视野
       loading: false, // 是否加载中
       loadingPercent: 0, // 加载倒计时
       sliceFormVisible: false, // 圆柱参数表单
@@ -306,6 +294,11 @@ export default {
         heightSegments: 1, // 竖直方向分段数
         openEnded: false, // 圆柱体顶部或底部是否打开
       },
+      horizontalSliceParameter: {
+        startHeight: 0, // 起始高度
+        endHeight: 100, // 终止高度
+        thick: 20, // 厚度
+      }, // 水平切片
       checkedKeys: [],
       selectedKeys: [],
       treeData: [],
@@ -411,7 +404,17 @@ export default {
       // 水平切片
       this.sliceTabsKey === 'flat' && this.flatForm.validateFields((err, values) => {
         if (!err) {
-          console.log(values)
+          Object.assign(this.horizontalSliceParameter, {
+            startHeight: Number(values.startHeight),
+            endHeight: Number(values.endHeight),
+            thick: Number(values.sliceThick),
+            color: this.color,
+          })
+          removeObject('horizontalSlice'); // 移除切片
+          makeHorizontalSlice('horizontalSlice', this.horizontalSliceParameter);
+          render();
+          this.sliceFormVisible = false;
+
         }
       })
       // 椎体切片

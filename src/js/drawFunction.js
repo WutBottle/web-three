@@ -413,3 +413,27 @@ export const animationDrawLine = () => {
   }
   renderA();
 }
+
+/** 绘制水平切片 **/
+export const makeHorizontalSlice = (name, horizontalParams) => {
+  const {startHeight, endHeight, thick, color} = horizontalParams;
+  let groupArray = new Three.Group();
+  groupArray.name = name;
+  const layersNum = Math.floor((endHeight - startHeight) / thick);
+  for (let i = 0; i < layersNum; i++) {
+    const plane = new Three.PlaneGeometry(800, 800)
+    const material = new Three.MeshPhongMaterial({
+      color: color,
+      side: Three.DoubleSide,
+    })
+    const mesh = new Three.Mesh(plane, material)
+    let group = new Three.Group();
+    group.add(mesh)
+    group.name = name + i;
+    group.position.x = 0;
+    group.position.y = 0;
+    group.position.z = i * thick;
+    groupArray.add(group)
+  }
+  scene.add(groupArray);
+}
