@@ -4,8 +4,8 @@
  */
 
 'use strict';
-import baseUrl from './baseUrl'; // 导入接口域名列表
-import axios from 'axios';
+import baseUrl from '../baseUrl'; // 导入接口域名列表
+import axios from '../axiosService';
 
 const tokensController = {
   // 登录用户

@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import api from '@api'
+import api from '@api/apiSugar'
 
 const formItemLayout = {
   labelCol: {span: 4},
@@ -66,9 +66,10 @@ export default {
       api.tokensController.loginUser(this.loginForm).then(res => {
         if(res.data.success) {
           this.$message.success('登录成功');
+          window.localStorage.setItem('Access-Token', `Bearer ${res.data.Token}`);
           this.$router.push('/work');
         }else {
-          this.$message.error('登录失败');
+          this.$message.error(res.data.message);
         }
       }).catch(error => {
         console.log(error);
