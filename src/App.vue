@@ -1,6 +1,5 @@
 <style lang="scss">
 body {
-  background: #555555;
   overflow: hidden;
 }
 </style>
