@@ -16,5 +16,9 @@ export default new Router({
     path: '/work',
     name: 'WorkPage',
     component: () => import('@components/WorkPage/WorkPage'),
+  }, {
+    path: '/file',
+    name: 'FilePage',
+    component: () => import('@components/FilePage/FilePage'),
   }]
 })

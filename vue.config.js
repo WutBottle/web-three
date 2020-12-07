@@ -5,10 +5,10 @@ module.exports = {
     loaderOptions: {
       less: {
         lessOptions:{
-          modifyVars: {
-            'primary-color': '#888',
-            'link-color': '#1DA57A',
-          },
+          // modifyVars: {
+          //   'primary-color': '#888',
+          //   'link-color': '#1DA57A',
+          // },
           javascriptEnabled: true,
         }
       }
