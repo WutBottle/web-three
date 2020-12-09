@@ -24,6 +24,9 @@ import {
   Avatar,
   Row,
   Col,
+  Tag,
+  Popconfirm,
+  Upload,
 } from 'ant-design-vue'
 import vcolorpicker from 'vcolorpicker'
 import routers from './routers'
@@ -51,7 +54,10 @@ Vue.use(Breadcrumb);
 Vue.use(Card);
 Vue.use(Avatar);
 Vue.use(Row);
-Vue.use(Col);
+Vue.use(Col)
+Vue.use(Tag);
+Vue.use(Popconfirm);
+Vue.use(Upload);
 
 Vue.prototype.$message = message;
 Vue.prototype.$confirm = Modal.confirm;
