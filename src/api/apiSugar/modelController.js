@@ -12,6 +12,10 @@ const modelController = {
   getModelList(params) {
     return axios.get(`${baseUrl.modelController}/getModelList`, {params});
   },
+  // 添加模型数据
+  addModel(params) {
+    return axios.post(`${baseUrl.modelController}/addModel`, params);
+  }
 };
 
 export default modelController;

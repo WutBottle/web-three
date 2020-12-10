@@ -23,7 +23,7 @@
               <img
                 slot="cover"
                 alt="example"
-                :src="item.modelImg"
+                :src="item.modelImgName"
               />
               <template slot="actions" class="ant-card-actions">
                 <a-button size="small" type="primary" @click="chooseModel">
@@ -71,9 +71,9 @@
                 </a-tooltip>
                 <a-tooltip slot="description" placement="top">
                   <template slot="title">
-                    <span>{{ item.modelTitle }}</span>
+                    <span>{{ item.modelDesc }}</span>
                   </template>
-                  <div class="line-ellipsis">{{ item.modelTitle }}</div>
+                  <div class="line-ellipsis">{{ item.modelDesc }}</div>
                 </a-tooltip>
               </a-card-meta>
             </a-card>
@@ -96,6 +96,13 @@
             v-decorator="['modelDesc', { rules: [{ required: true, message: '请输入模型名称!' }] }]"
           />
         </a-form-item>
+        <a-form-item label="设置权限">
+          <a-switch
+            checked-children="公开"
+            un-checked-children="私有"
+            v-decorator="['isPublic', { initialValue: true, valuePropName: 'checked', rules: [{ required: true, message: '请选择模型权限!' }] }]"
+          />
+        </a-form-item>
         <a-form-item
           label="上传图片"
           :required="true"
@@ -113,7 +120,7 @@
           >
             <a-button>
               <a-icon type="upload"/>
-              Click to Upload
+              上传图片
             </a-button>
           </a-upload>
         </a-form-item>
@@ -134,7 +141,7 @@
           >
             <a-button>
               <a-icon type="upload"/>
-              Click to Upload
+              上传模型
             </a-button>
           </a-upload>
         </a-form-item>
@@ -164,13 +171,23 @@ export default {
     }
   },
   mounted() {
-    api.modelController.getModelList({
-      type: 'my',
-    }).then(res => {
-      this.modelList = res.data.data;
-    })
+    this.getModelList();
   },
   methods: {
+    getModelList() {
+      api.modelController.getModelList({
+        type: 'my',
+      }).then(res => {
+        console.log(res.data);
+        this.modelList = res.data.data.map(item => {
+          return Object.assign(item, {
+            modelFileName: this.baseUrl.serverBaseController + 'public/' + item.modelFileName,
+            modelImgName: this.baseUrl.serverBaseController + 'public/' + item.modelImgName,
+          })
+        });
+        console.log(this.modelList)
+      })
+    },
     chooseModel() {
       this.$confirm({
         title: '确定选择该模型进入工作台?',
@@ -194,7 +211,19 @@ export default {
     handleUpload() {
       this.uploadForm.validateFields((err, values) => {
         if (!err) {
-          console.log('Received values of form: ', values);
+          const params = {
+            modelTitle: values.modelTitle,
+            modelDesc: values.modelDesc,
+            isPublic: values.isPublic,
+            modelImgName: this.modelImgName,
+            modelFileName: this.modelFileName,
+          }
+          api.modelController.addModel(params).then(res => {
+            const status = res.data.success;
+            this.$message[status ? 'success' : 'error'](res.data.message);
+            this.uploadVisible = !status;
+            status && this.getModelList();
+          })
         }
       })
     },

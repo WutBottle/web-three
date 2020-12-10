@@ -27,6 +27,7 @@ import {
   Tag,
   Popconfirm,
   Upload,
+  Switch,
 } from 'ant-design-vue'
 import vcolorpicker from 'vcolorpicker'
 import routers from './routers'
@@ -58,6 +59,7 @@ Vue.use(Col)
 Vue.use(Tag);
 Vue.use(Popconfirm);
 Vue.use(Upload);
+Vue.use(Switch);
 
 Vue.prototype.$message = message;
 Vue.prototype.$confirm = Modal.confirm;
