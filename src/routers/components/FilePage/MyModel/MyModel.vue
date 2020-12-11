@@ -16,7 +16,8 @@
       <a-button slot="extra" type="primary" icon="upload" @click="() => this.uploadVisible = true">
         上传模型
       </a-button>
-      <a-row :gutter="[16, 16]">
+      <a-empty v-if="!modelList.length" description="暂无数据"/>
+      <a-row v-else :gutter="[16, 16]">
         <template v-for="(item, index) in modelList">
           <a-col :span="8" :key="index">
             <a-card hoverable>
@@ -178,7 +179,6 @@ export default {
       api.modelController.getModelList({
         type: 'my',
       }).then(res => {
-        console.log(res.data);
         this.modelList = res.data.data.map(item => {
           return Object.assign(item, {
             modelFileName: this.baseUrl.serverBaseController + 'public/' + item.modelFileName,
@@ -205,7 +205,13 @@ export default {
     },
     // 删除模型数据
     handleDeleteModel(data) {
-      console.log(data)
+      api.modelController.deleteModel({
+        id: data._id
+      }).then(res => {
+        const status = res.data.success;
+        this.$message[status ? 'success' : 'error'](res.data.message);
+        status && this.getModelList();
+      })
     },
     // 上传模型信息
     handleUpload() {

@@ -15,6 +15,10 @@ const modelController = {
   // 添加模型数据
   addModel(params) {
     return axios.post(`${baseUrl.modelController}/addModel`, params);
+  },
+  // 删除模型数据
+  deleteModel(params) {
+    return axios.post(`${baseUrl.modelController}/deleteModel`, params);
   }
 };
 
