@@ -47,7 +47,7 @@ export const removeObject = (name) => {
 
 /** 初始化Light **/
 export const initialLight = () => {
-  point = new Three.PointLight(0xffffff);
+  point = new Three.PointLight(0x11ffff);
   ambient = new Three.AmbientLight(0x444444);
   point.position.set(200, 100, 300); //点光源位置
   scene.add(point); // 点光源添加到场景中

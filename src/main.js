@@ -29,6 +29,7 @@ import {
   Upload,
   Switch,
   Empty,
+  PageHeader,
 } from 'ant-design-vue'
 import vcolorpicker from 'vcolorpicker'
 import routers from './routers'
@@ -62,6 +63,7 @@ Vue.use(Popconfirm);
 Vue.use(Upload);
 Vue.use(Switch);
 Vue.use(Empty);
+Vue.use(PageHeader);
 
 Vue.prototype.$message = message;
 Vue.prototype.$confirm = Modal.confirm;

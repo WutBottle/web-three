@@ -19,15 +19,20 @@
       <a-empty v-if="!modelList.length" description="暂无数据"/>
       <a-row v-else :gutter="[16, 16]">
         <template v-for="(item, index) in modelList">
-          <a-col :span="8" :key="index">
+          <a-col :span="6" :key="index">
             <a-card hoverable>
-              <img
+              <div
                 slot="cover"
-                alt="example"
-                :src="item.modelImgName"
-              />
+                style="height: 200px;"
+              >
+                <img
+                  style="width: 100%;height:100%;object-fit: contain"
+                  :alt="item.modelImgName"
+                  :src="item.modelImgName"
+                />
+              </div>
               <template slot="actions" class="ant-card-actions">
-                <a-button size="small" type="primary" @click="chooseModel">
+                <a-button size="small" type="primary" @click="chooseModel(item)">
                   选择
                 </a-button>
                 <a-popconfirm
@@ -185,17 +190,16 @@ export default {
             modelImgName: this.baseUrl.serverBaseController + 'public/' + item.modelImgName,
           })
         });
-        console.log(this.modelList)
       })
     },
-    chooseModel() {
+    chooseModel(data) {
       this.$confirm({
         title: '确定选择该模型进入工作台?',
         okText: '确定',
         okType: 'primary',
         cancelText: '取消',
         onOk: () => {
-          this.$router.push('/work');
+          this.$router.push({name: 'WorkPage', params: {modelFileUrl: data.modelFileName}});
         },
       });
     },

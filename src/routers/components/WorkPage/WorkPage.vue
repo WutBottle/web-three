@@ -1,17 +1,9 @@
 <style lang="scss">
 .WorkPage {
   .top {
-    border-bottom: 1px solid rgb(68, 68, 68);
     position: absolute;
     width: 100%;
     height: 56px;
-    background: rgb(51, 51, 51);
-
-    .select {
-      position: absolute;
-      top: 12px;
-      left: 20px;
-    }
 
     .operate-wrapper {
       position: absolute;
@@ -31,7 +23,7 @@
 
         i {
           font-size: 30px;
-          color: #a8a8a8;
+          color: #5d5d5d;
         }
       }
     }
@@ -40,7 +32,6 @@
   .left {
     overflow: auto;
     background: #333333;
-    border-right: solid 1px #444444;
     position: absolute;
     top: 60px;
     width: 196px;
@@ -89,18 +80,11 @@
   <div class="WorkPage">
     <div id="statsWrapper"></div>
     <div class="top">
-      <a-select class="select" v-model="currentModelName" placeholder="请选择模型" style="width: 120px"
-                @change="handleChange">
-        <a-select-option value="轮轴">
-          轮轴
-        </a-select-option>
-        <a-select-option value="扇形">
-          扇形
-        </a-select-option>
-        <a-select-option value="小火龙">
-          小火龙
-        </a-select-option>
-      </a-select>
+      <a-page-header
+        style="border: 1px solid rgb(235, 237, 240);"
+        title="返回"
+        @back="() => {this.$router.push('/file')}"
+      />
       <div class="operate-wrapper">
         <a-tooltip placement="top">
           <template slot="title">
@@ -271,7 +255,6 @@ import {
   makeHorizontalSlice,
 } from '@js/drawFunction';
 
-const modelUrl = 'http://10.224.120.179:8010/';
 export default {
   name: "WorkPage",
   data() {
@@ -304,6 +287,7 @@ export default {
       treeData: [],
       sliceTabsKey: 'flat', // 切片信息面板
       color: '#ff0000', // 选择
+      modelFile: '',
     }
   },
   mounted() {
@@ -312,6 +296,8 @@ export default {
     window.onresize = () => {
       handleReset(); // 处理页面放缩
     };
+    this.modelFile = this.$route.params.modelFileUrl;
+    this.loaderSTL(this.modelFile);
   },
   methods: {
     // 文件读取入口
@@ -384,15 +370,12 @@ export default {
     createTree() {
       this.traverseScene(getScene().children, this.treeData, ''); // 遍历scene进行控制
     },
-    handleChange(value) {
-      this.loaderSTL(value);
-    },
-    loaderSTL(name) {
+    loaderSTL(fileUrl) {
       removeGroup();
       this.loading = true;
       let loader = new STLLoader();
-      loader.load(modelUrl + name + '.stl', (geometry) => {
-        drawSTL(geometry, name);
+      loader.load(fileUrl, (geometry) => {
+        drawSTL(geometry, fileUrl);
         this.loading = false;
         this.loadingPercent = 0;
       }, (xhr) => {
