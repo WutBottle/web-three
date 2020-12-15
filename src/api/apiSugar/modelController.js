@@ -19,6 +19,10 @@ const modelController = {
   // 删除模型数据
   deleteModel(params) {
     return axios.post(`${baseUrl.modelController}/deleteModel`, params);
+  },
+  // 修改模型数据
+  updateModel(params) {
+    return axios.post(`${baseUrl.modelController}/updateModel`, params);
   }
 };
 

@@ -35,19 +35,9 @@
                 <a-button size="small" type="primary" @click="chooseModel(item)">
                   选择
                 </a-button>
-                <a-popconfirm
-                  ok-text="Yes"
-                  cancel-text="No"
-                  @confirm="confirmStatus(item)"
-                >
-                  <div slot="title">
-                    确定将模型设置为<span style="color: red;font-weight: bold" v-if="item.isPublic">私有</span>
-                    <span v-else style="color: green;font-weight: bold">公有</span>
-                  </div>
-                  <a-button type="dashed" size="small">
-                    状态
-                  </a-button>
-                </a-popconfirm>
+                <a-button type="dashed" size="small" @click="showUpdateModal(item)">
+                  修改
+                </a-button>
                 <a-popconfirm
                   title="确定删除该模型？"
                   ok-text="确定"
@@ -87,7 +77,7 @@
         </template>
       </a-row>
     </a-card>
-    <a-modal v-model="uploadVisible" title="上传模型" okText="确认" cancelText="取消" @ok="handleUpload">
+    <a-modal v-model="uploadVisible" title="上传模型" okText="确认" cancelText="取消" @ok="handleUpload('add')">
       <a-form :form="uploadForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
         <a-form-item label="模型名称">
           <a-input
@@ -153,6 +143,85 @@
         </a-form-item>
       </a-form>
     </a-modal>
+    <a-modal v-model="updateVisible" title="上传模型" okText="确认" cancelText="取消" @ok="handleUpload('update')"
+             :afterClose="() => this.clearModalData('updateForm')">
+      <a-form :form="updateForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+        <a-form-item label="模型名称">
+          <a-input
+            placeholder="请输入模型名称"
+            v-decorator="['modelTitle', { initialValue: editModelData.modelTitle, rules: [{ required: true, message: '请输入模型名称!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="模型描述">
+          <a-textarea
+            placeholder="请输入模型描述"
+            :rows="3"
+            v-decorator="['modelDesc', { initialValue: editModelData.modelDesc, rules: [{ required: true, message: '请输入模型名称!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="设置权限">
+          <a-switch
+            checked-children="公开"
+            un-checked-children="私有"
+            v-decorator="['isPublic', { initialValue: editModelData.isPublic, valuePropName: 'checked', rules: [{ required: true, message: '请选择模型权限!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item
+          label="上传图片"
+          :required="true"
+        >
+          <a-upload
+            name="file"
+            :multiple="false"
+            :action="baseUrl.serverBaseController + 'model/upload'"
+            :headers="headers"
+            list-type="picture"
+            v-decorator="['modelImg', {
+            valuePropName: 'fileList',
+            initialValue: [{uid: '-1',
+            name: editModelData.modelImgName,
+            status: 'done',
+            url: editModelData.modelImgName,
+            thumbUrl: editModelData.modelImgName,
+            }],
+            getValueFromEvent: normModelImgFile,
+            rules: [{ required: true, message: '请上传模型图片!' }]
+            }]"
+          >
+            <a-button>
+              <a-icon type="upload"/>
+              上传图片
+            </a-button>
+          </a-upload>
+        </a-form-item>
+        <a-form-item
+          label="上传模型"
+          :required="true"
+        >
+          <a-upload
+            name="file"
+            :multiple="false"
+            :action="baseUrl.serverBaseController + 'model/upload'"
+            :headers="headers"
+            v-decorator="['modelData', {
+            initialValue: [{uid: '-1',
+            name: editModelData.modelFileName,
+            status: 'done',
+            url: editModelData.modelFileName,
+            }],
+            valuePropName: 'fileList',
+            getValueFromEvent: normModelFile,
+            rules: [{ required: true, message: '请上传模型文件!' }]
+            }]"
+          >
+            <a-button>
+              <a-icon type="upload"/>
+              上传模型
+            </a-button>
+          </a-upload>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -174,6 +243,9 @@ export default {
       },
       modelImgName: '', // 后台返回的模型图片文件名
       modelFileName: '', // 后台返回的模型文件名
+      updateVisible: false, // 控制修改模型弹窗
+      updateForm: this.$form.createForm(this, {name: 'updateForm'}),
+      editModelData: {},
     }
   },
   mounted() {
@@ -203,9 +275,10 @@ export default {
         },
       });
     },
-    // 修改模型状态
-    confirmStatus(data) {
-      console.log(data)
+    // 修改模型数据
+    showUpdateModal(data) {
+      this.updateVisible = true;
+      this.editModelData = data;
     },
     // 删除模型数据
     handleDeleteModel(data) {
@@ -218,8 +291,8 @@ export default {
       })
     },
     // 上传模型信息
-    handleUpload() {
-      this.uploadForm.validateFields((err, values) => {
+    handleUpload(type) {
+      type === 'add' && this.uploadForm.validateFields((err, values) => {
         if (!err) {
           const params = {
             modelTitle: values.modelTitle,
@@ -232,7 +305,31 @@ export default {
             const status = res.data.success;
             this.$message[status ? 'success' : 'error'](res.data.message);
             this.uploadVisible = !status;
-            status && this.getModelList();
+            if(status) {
+              this.getModelList();
+              this.uploadVisible = false;
+            }
+          })
+        }
+      })
+      type === 'update' && this.updateForm.validateFields((err, values) => {
+        if (!err) {
+          const params = {
+            modelTitle: values.modelTitle,
+            modelDesc: values.modelDesc,
+            isPublic: values.isPublic,
+            modelImgName: this.modelImgName || this.editModelData.modelImgName.split('/')[this.editModelData.modelImgName.split('/').length - 1],
+            modelFileName: this.modelFileName || this.editModelData.modelFileName.split('/')[this.editModelData.modelFileName.split('/').length - 1],
+            id: this.editModelData._id,
+          }
+          api.modelController.updateModel(params).then(res => {
+            const status = res.data.success;
+            this.$message[status ? 'success' : 'error'](res.data.message);
+            this.uploadVisible = !status;
+            if(status) {
+              this.getModelList();
+              this.updateVisible = false;
+            }
           })
         }
       })
@@ -275,6 +372,10 @@ export default {
       }
       return info && info.fileList;
     },
+    // 关闭modal后清除modal数据
+    clearModalData(name) {
+      this[name].resetFields();
+    }
   }
 }
 </script>
