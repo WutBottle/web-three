@@ -67,6 +67,7 @@ export default {
         if(res.data.success) {
           this.$message.success('登录成功');
           window.localStorage.setItem('Access-Token', `Bearer ${res.data.Token}`);
+          window.localStorage.setItem('username', res.data.username);
           this.$router.push('/file');
         }else {
           this.$message.error(res.data.message);

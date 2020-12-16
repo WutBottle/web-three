@@ -14,7 +14,7 @@ const tokensController = {
   },
   // 注销用户
   logout(params) {
-    return axios.post(`${baseUrl.tokensController}/logout`, params);
+    return axios.get(`${baseUrl.tokensController}/logout`, {params});
   },
 };
 

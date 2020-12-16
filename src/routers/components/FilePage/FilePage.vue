@@ -11,6 +11,13 @@
       margin: 16px 24px 16px 0;
       float: left;
     }
+
+    .exit-button {
+      width: 140px;
+      height: 30px;
+      color: #fff !important;
+      float: right;
+    }
   }
 }
 </style>
@@ -21,6 +28,18 @@
       <a-layout-header>
         <div class="logo">
           模型管理中心
+        </div>
+        <div class="exit-button">
+          <a-dropdown-button>
+            您好，{{ username }}
+            <a-menu slot="overlay" @click="handleMenuClick">
+              <a-menu-item key="logout">
+                <a-icon type="logout"/>
+                退出登录
+              </a-menu-item>
+            </a-menu>
+            <a-icon slot="icon" type="user"/>
+          </a-dropdown-button>
         </div>
         <a-menu
           theme="dark"
@@ -55,6 +74,7 @@
 import MyModel from "@components/FilePage/MyModel/MyModel";
 import OfficialModel from "@components/FilePage/OfficialModel/OfficialModel";
 import AllModel from "@components/FilePage/AllModel/AllModel";
+import api from '@api/apiSugar';
 
 export default {
   name: "FilePage",
@@ -67,6 +87,7 @@ export default {
     return {
       menuKey: ['my'],
       currentComponent: MyModel,
+      username: window.localStorage.getItem('username'),
     }
   },
   methods: {
@@ -84,6 +105,18 @@ export default {
         default:
           break;
       }
+    },
+    handleMenuClick({key}) {
+      console.log(key)
+      key === 'logout' && api.tokensController.logout().then(res => {
+        console.log(res)
+        if(res.data.success){
+          this.$message.success(res.data.message);
+          this.$router.push('/login');
+        }else {
+          this.$message.error(res.data.message);
+        }
+      })
     }
   }
 }
