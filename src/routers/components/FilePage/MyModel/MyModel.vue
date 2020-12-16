@@ -7,6 +7,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  .owner-display {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    text-align: center;
+    line-height: 24px;
+    font-size: 24px;
+    font-weight: bold;
+    background-color: #2bace7;
+    color: #fff;
+    border-radius: 50%;
+  }
 }
 </style>
 
@@ -32,10 +45,10 @@
                 />
               </div>
               <template slot="actions" class="ant-card-actions">
-                <a-button size="small" type="primary" @click="chooseModel(item)">
+                <a-button type="primary" @click="chooseModel(item)">
                   选择
                 </a-button>
-                <a-button type="dashed" size="small" @click="showUpdateModal(item)">
+                <a-button @click="showUpdateModal(item)">
                   修改
                 </a-button>
                 <a-popconfirm
@@ -45,12 +58,20 @@
                   @confirm="handleDeleteModel(item)"
                 >
                   <a-icon slot="icon" type="question-circle-o" style="color: red"/>
-                  <a-button type="danger" size="small">
+                  <a-button type="danger">
                     删除
                   </a-button>
                 </a-popconfirm>
               </template>
               <a-card-meta>
+                <a-tooltip slot="avatar" placement="top">
+                  <template slot="title">
+                    <span>{{ item.ownerName }}</span>
+                  </template>
+                  <div class="owner-display">
+                    {{ item.ownerName.substr(0, 1) }}
+                  </div>
+                </a-tooltip>
                 <a-tooltip slot="title" placement="top">
                   <template slot="title">
                     <span>{{ item.modelTitle }}</span>
@@ -305,8 +326,9 @@ export default {
             const status = res.data.success;
             this.$message[status ? 'success' : 'error'](res.data.message);
             this.uploadVisible = !status;
-            if(status) {
+            if (status) {
               this.getModelList();
+              this.clearModalData('uploadForm');
               this.uploadVisible = false;
             }
           })
@@ -326,7 +348,7 @@ export default {
             const status = res.data.success;
             this.$message[status ? 'success' : 'error'](res.data.message);
             this.uploadVisible = !status;
-            if(status) {
+            if (status) {
               this.getModelList();
               this.updateVisible = false;
             }
