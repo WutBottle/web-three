@@ -13,8 +13,8 @@
     width: 32px;
     height: 32px;
     text-align: center;
-    line-height: 24px;
-    font-size: 24px;
+    line-height: 32px;
+    font-size: 20px;
     font-weight: bold;
     background-color: #2bace7;
     color: #fff;
@@ -69,7 +69,7 @@
                     <span>{{ item.ownerName }}</span>
                   </template>
                   <div class="owner-display">
-                    {{ item.ownerName.substr(0, 1) }}
+                    {{ item.ownerName.substr(0, 1).toUpperCase() }}
                   </div>
                 </a-tooltip>
                 <a-tooltip slot="title" placement="top">
