@@ -16,6 +16,10 @@ const tokensController = {
   logout(params) {
     return axios.get(`${baseUrl.tokensController}/logout`, {params});
   },
+  // 注册用户
+  registerUser(params) {
+    return axios.post(`${baseUrl.tokensController}/register`, params)
+  }
 };
 
 export default tokensController;

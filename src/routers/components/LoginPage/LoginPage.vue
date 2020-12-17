@@ -4,7 +4,7 @@
   height: 400px;
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 46%;
   margin-left: -250px;
   margin-top: -200px;
 }
@@ -17,29 +17,83 @@
       type="info"
       style="margin-bottom: 20px"
     />
-    <a-form-model layout="horizontal" :model="loginForm" @submit="handleSubmit" v-bind="formItemLayout"
-                  @submit.native.prevent>
-      <a-form-model-item label="用户名">
-        <a-input v-model="loginForm.username" placeholder="用户名">
-          <a-icon slot="prefix" type="user" style="color:rgba(0,0,0,.25)"/>
-        </a-input>
-      </a-form-model-item>
-      <a-form-model-item label="密码">
-        <a-input v-model="loginForm.password" type="password" placeholder="密码">
-          <a-icon slot="prefix" type="lock" style="color:rgba(0,0,0,.25)"/>
-        </a-input>
-      </a-form-model-item>
-      <a-form-model-item v-bind="{wrapperCol: { span: 24 }}">
-        <a-button
-          style="width: 100%;"
-          type="primary"
-          html-type="submit"
-          :disabled="loginForm.user === '' || loginForm.password === ''"
-        >
-          登录
-        </a-button>
-      </a-form-model-item>
-    </a-form-model>
+    <a-tabs v-model="tabsKey">
+      <a-tab-pane key="login">
+      <span slot="tab">
+        <a-icon type="login" />
+        登录
+      </span>
+        <a-form-model layout="horizontal" :model="loginForm" @submit="handleSubmit" v-bind="formItemLayout"
+                      @submit.native.prevent>
+          <a-form-model-item label="用户名">
+            <a-input v-model="loginForm.username" placeholder="用户名">
+              <a-icon slot="prefix" type="user" style="color:rgba(0,0,0,.25)"/>
+            </a-input>
+          </a-form-model-item>
+          <a-form-model-item label="密码">
+            <a-input v-model="loginForm.password" type="password" placeholder="密码">
+              <a-icon slot="prefix" type="lock" style="color:rgba(0,0,0,.25)"/>
+            </a-input>
+          </a-form-model-item>
+          <a-form-model-item v-bind="{wrapperCol: { span: 24 }}">
+            <a-button
+              style="width: 100%;"
+              type="primary"
+              html-type="submit"
+              :disabled="loginForm.user === '' || loginForm.password === ''"
+            >
+              登录
+            </a-button>
+            Or
+            <a @click="() => this.tabsKey = 'register'">
+              register now!
+            </a>
+          </a-form-model-item>
+        </a-form-model>
+      </a-tab-pane>
+      <a-tab-pane key="register">
+      <span slot="tab">
+        <a-icon type="user-add" />
+        注册
+      </span>
+        <a-form layout="horizontal" :form="registerForm" v-bind="formItemLayout">
+          <a-form-item label="用户名">
+            <a-input
+              placeholder="请输入用户名"
+              v-decorator="['username', { rules: [{ required: true, message: '请输入用户名!' }] }]"
+            >
+              <a-icon slot="prefix" type="user" style="color:rgba(0,0,0,.25)"/>
+            </a-input>
+          </a-form-item>
+          <a-form-item label="真实姓名">
+            <a-input
+              placeholder="请输入真实姓名"
+              v-decorator="['nickname', { rules: [{ required: true, message: '请输入真实姓名!' }] }]"
+            >
+              <a-icon slot="prefix" type="idcard" style="color:rgba(0,0,0,.25)"/>
+            </a-input>
+          </a-form-item>
+          <a-form-item label="密码">
+            <a-input
+              type="password"
+              placeholder="请输入登录密码"
+              v-decorator="['password', { rules: [{ required: true, message: '请输入登录密码!' }] }]"
+            >
+              <a-icon slot="prefix" type="lock" style="color:rgba(0,0,0,.25)"/>
+            </a-input>
+          </a-form-item>
+          <a-form-item v-bind="{wrapperCol: { span: 24 }}">
+            <a-button
+              style="width: 100%;"
+              type="primary"
+              @click="handleRegister"
+            >
+              登录
+            </a-button>
+          </a-form-item>
+        </a-form>
+      </a-tab-pane>
+    </a-tabs>
   </div>
 </template>
 
@@ -58,16 +112,20 @@ export default {
       loginForm: {
         username: '',
         password: '',
-      }
+      },
+      registerForm: this.$form.createForm(this, {name: 'registerForm'}),
+      tabsKey: 'login',
     }
   },
   methods: {
+    // 处理登录
     handleSubmit() {
       api.tokensController.loginUser(this.loginForm).then(res => {
         if(res.data.success) {
           this.$message.success('登录成功');
           window.localStorage.setItem('Access-Token', `Bearer ${res.data.Token}`);
           window.localStorage.setItem('username', res.data.username);
+          window.localStorage.setItem('nickname', res.data.nickname);
           this.$router.push('/file');
         }else {
           this.$message.error(res.data.message);
@@ -75,6 +133,22 @@ export default {
       }).catch(error => {
         console.log(error);
       });
+    },
+    // 处理注册
+    handleRegister() {
+      this.registerForm.validateFields((err, values) => {
+        if (!err) {
+          api.tokensController.registerUser({...values}).then(res => {
+            if(res.data.success) {
+              this.$message.success(res.data.message);
+              this.tabsKey = 'login';
+              this.registerForm.resetFields();
+            }else {
+              this.$message.error(res.data.message);
+            }
+          })
+        }
+      })
     }
   }
 }

@@ -31,7 +31,7 @@
         </div>
         <div class="exit-button">
           <a-dropdown-button>
-            您好，{{ username }}
+            您好，{{ nickname }}
             <a-menu slot="overlay" @click="handleMenuClick">
               <a-menu-item key="logout">
                 <a-icon type="logout"/>
@@ -88,6 +88,7 @@ export default {
       menuKey: ['my'],
       currentComponent: MyModel,
       username: window.localStorage.getItem('username'),
+      nickname: window.localStorage.getItem('nickname'),
     }
   },
   methods: {
