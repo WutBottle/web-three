@@ -269,7 +269,7 @@ export default {
       editModelData: {},
     }
   },
-  mounted() {
+  activated() {
     this.getModelList();
   },
   methods: {

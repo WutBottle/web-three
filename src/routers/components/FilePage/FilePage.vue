@@ -31,7 +31,7 @@
         </div>
         <div class="exit-button">
           <a-dropdown-button>
-            您好，{{ nickname }}
+            您好，{{ nickname }}!
             <a-menu slot="overlay" @click="handleMenuClick">
               <a-menu-item key="logout">
                 <a-icon type="logout"/>

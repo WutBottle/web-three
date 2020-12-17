@@ -88,7 +88,7 @@
               type="primary"
               @click="handleRegister"
             >
-              登录
+              注册
             </a-button>
           </a-form-item>
         </a-form>
