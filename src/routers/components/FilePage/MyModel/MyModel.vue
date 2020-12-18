@@ -82,7 +82,7 @@
                     <span>{{ item.ownerName }}</span>
                   </template>
                   <div class="owner-display">
-                    {{ item.ownerNick.charAt(item.ownerNick.length-1) }}
+                    {{ item.ownerNick.charAt(item.ownerNick.length - 1) }}
                   </div>
                 </a-tooltip>
                 <a-tooltip slot="title" placement="top">
@@ -262,13 +262,15 @@
 <script>
 import api from '@api/apiSugar';
 import baseUrl from '@api/baseUrl'; // 导入接口域名列表
+import {imgFileVerify, modelFileVerify} from '@js/fileTypeVerification'; // 引入图片文件校验
 const ACCESS_TOKEN = 'Access-Token';
-
 export default {
   name: "MyModel",
   data() {
     return {
       baseUrl,
+      modelFileVerify,
+      imgFileVerify,
       modelList: [], // 模型数据列表
       uploadVisible: false, // 控制上传模型弹窗
       uploadForm: this.$form.createForm(this, {name: 'uploadForm'}),
@@ -374,9 +376,14 @@ export default {
       let fileList = [...info.fileList];
       // 1. Limit the number of uploaded files
       //    Only to show two recent uploaded files, and old ones will be replaced by the new
-      fileList = fileList.slice(-1); // 出队列
-      Object.assign(info, {fileList});
-
+      const fileNameArray = info.file.name.split('.');
+      if (this.imgFileVerify(fileNameArray[fileNameArray.length - 1])) {
+        fileList = fileList.slice(-1); // 出队列
+        Object.assign(info, {fileList});
+      } else {
+        this.$message.error('请上传png、jpg、jpeg格式的文件');
+        return [];
+      }
       if (info.file.status !== 'uploading') {
         console.log(info.file, info.fileList);
       }
@@ -393,9 +400,14 @@ export default {
       let fileList = [...info.fileList];
       // 1. Limit the number of uploaded files
       //    Only to show two recent uploaded files, and old ones will be replaced by the new
-      fileList = fileList.slice(-1); // 出队列
-      Object.assign(info, {fileList});
-
+      const fileNameArray = info.file.name.split('.');
+      if (this.modelFileVerify(fileNameArray[fileNameArray.length - 1])) {
+        fileList = fileList.slice(-1); // 出队列
+        Object.assign(info, {fileList});
+      } else {
+        this.$message.error('请上传stl格式的文件');
+        return [];
+      }
       if (info.file.status !== 'uploading') {
         console.log(info.file, info.fileList);
       }
