@@ -48,18 +48,31 @@
                 <a-button type="primary" @click="chooseModel(item)">
                   选择
                 </a-button>
-                <a-button @click="showUpdateModal(item)">
+                <a-button v-if="item.isOwned" @click="showUpdateModal(item)">
                   修改
                 </a-button>
                 <a-popconfirm
                   title="确定删除该模型？"
                   ok-text="确定"
                   cancel-text="取消"
+                  v-if="item.isOwned"
                   @confirm="handleDeleteModel(item)"
                 >
                   <a-icon slot="icon" type="question-circle-o" style="color: red"/>
                   <a-button type="danger">
                     删除
+                  </a-button>
+                </a-popconfirm>
+                <a-popconfirm
+                  title="确定移除该模型？"
+                  ok-text="确定"
+                  cancel-text="取消"
+                  v-else
+                  @confirm="handleRemoveModel(item)"
+                >
+                  <a-icon slot="icon" type="question-circle-o" style="color: red"/>
+                  <a-button type="danger">
+                    移除
                   </a-button>
                 </a-popconfirm>
               </template>
@@ -397,6 +410,13 @@ export default {
     // 关闭modal后清除modal数据
     clearModalData(name) {
       this[name].resetFields();
+    },
+    handleRemoveModel(data) {
+      api.modelController.removeUsableModel({id: data._id}).then(res => {
+        const status = res.data.success;
+        this.$message[status ? 'success' : 'error'](res.data.message);
+        status && this.getModelList();
+      })
     }
   }
 }

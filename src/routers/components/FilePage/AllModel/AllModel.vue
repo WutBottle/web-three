@@ -45,7 +45,7 @@
                 <a-button type="primary" :disabled="!item.isPublic" @click="addIntoMyModel(item)">
                   加入仓库
                 </a-button>
-                <a-button type="danger" @click="showApplyModal(item)" :disabled="item.isPublic">
+                <a-button type="danger" :disabled="item.isPublic" @click="showApplyModal(item)">
                   申请使用
                 </a-button>
               </template>
@@ -133,7 +133,13 @@ export default {
         okType: 'primary',
         cancelText: '取消',
         onOk: () => {
-          console.log(data)
+          api.modelController.addUsableModel({id: data._id}).then(res => {
+            if(res.data.success) {
+              this.$message.success(res.data.message);
+            }else {
+              this.$message.error(res.data.message);
+            }
+          })
         },
       });
     },

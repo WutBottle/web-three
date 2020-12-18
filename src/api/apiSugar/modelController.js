@@ -23,7 +23,15 @@ const modelController = {
   // 修改模型数据
   updateModel(params) {
     return axios.post(`${baseUrl.modelController}/updateModel`, params);
-  }
+  },
+  // 加入我可使用仓库
+  addUsableModel(params) {
+    return axios.post(`${baseUrl.modelController}/addUsableModel`, params);
+  },
+  // 移除我可使用仓库
+  removeUsableModel(params) {
+    return axios.post(`${baseUrl.modelController}/removeUsableModel`, params);
+  },
 };
 
 export default modelController;
