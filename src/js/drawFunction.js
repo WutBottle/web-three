@@ -1,14 +1,15 @@
 import * as Three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'stats.js';
-
+const leftNum = 40;
+const topNum = 29;
 let scene = new Three.Scene(); // 场景对象
 let camera = null; // 相机对象
 let renderer = new Three.WebGLRenderer(); // 创建渲染器对象
 let point = null; // 光源设置 点光源
 let ambient = null; // 环境光
-let width = window.innerWidth - 200; // 窗口宽度
-let height = window.innerHeight - 60; // 窗口高度
+let width = window.innerWidth - leftNum; // 窗口宽度
+let height = window.innerHeight - topNum; // 窗口高度
 let k = null; // 窗口宽高比
 let s = null; // 三维场景显示范围控制系数，系数越大，显示的范围越大
 let controls = {}; // 创建控件对象
@@ -24,7 +25,7 @@ export const statsInit = () => {
   wrapperDom.appendChild( stats.dom );
   stats.dom.style.left = 'auto';
   stats.dom.style.right = '0';
-  stats.dom.style.top = '60px';
+  stats.dom.style.top = '30px';
   function animate() {
     stats.begin();
     // monitored code goes here
@@ -308,8 +309,8 @@ export const drawSTL = (geometry, name) => {
 
 /** 处理页面缩放 **/
 export const handleReset = () => {
-  width = window.innerWidth - 200;
-  height = window.innerHeight - 60;
+  width = window.innerWidth - leftNum;
+  height = window.innerHeight - topNum;
   renderer.setSize(width, height);
   // 重置相机投影的相关参数
   k = width / height;//窗口宽高比

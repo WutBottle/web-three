@@ -44,16 +44,18 @@
 
   #webgl {
     position: absolute;
-    top: 60px;
-    left: 200px;
+    top: 29px;
+    left: 40px;
+    right: 0;
+    bottom: 0;
   }
 
   #load-mask {
     position: fixed;
-    width: calc(100% - 200px);
-    height: calc(100% - 60px);
-    top: 60px;
-    left: 200px;
+    width: calc(100% - 40px);
+    height: calc(100% - 29px);
+    top: 30px;
+    left: 40px;
     background-color: rgba(200, 200, 200, 0.8);
     text-align: center;
 
@@ -67,8 +69,6 @@
       margin: -10% 0 0 -25%;
     }
   }
-
-
 }
 
 .m-colorPicker .box {
@@ -79,81 +79,17 @@
 <template>
   <div class="WorkPage">
     <div id="statsWrapper"></div>
-    <div class="top">
-      <a-page-header
-        style="border: 1px solid rgb(235, 237, 240);"
-        title="返回"
-        @back="() => {this.$router.push('/file')}"
-      />
-      <div class="operate-wrapper">
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>回中</span>
-          </template>
-          <button @click="resetModel">
-            <i class="iconfont icon-reset"></i>
-          </button>
-        </a-tooltip>
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>放大</span>
-          </template>
-          <button @click="handleEnlarge">
-            <i class="iconfont icon-enlarge"></i>
-          </button>
-        </a-tooltip>
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>缩小</span>
-          </template>
-          <button @click="handleNarrow">
-            <i class="iconfont icon-narrow"></i>
-          </button>
-        </a-tooltip>
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>坐标轴</span>
-          </template>
-          <button @click="showHide('centerAxis')">
-            <i class="iconfont icon-axis"></i>
-          </button>
-        </a-tooltip>
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>底部网格</span>
-          </template>
-          <button @click="showHide('bottomGrid')">
-            <i class="iconfont icon-grid"></i>
-          </button>
-        </a-tooltip>
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>包络盒</span>
-          </template>
-          <button @click="showHide('surroundBox')">
-            <i class="iconfont icon-box"></i>
-          </button>
-        </a-tooltip>
-        <a-tooltip placement="top">
-          <template slot="title">
-            <span>切片</span>
-          </template>
-          <button @click="() => this.sliceFormVisible = true">
-            <i class="iconfont icon-slice"></i>
-          </button>
-        </a-tooltip>
-<!--        <input type="file" ref="filElem" @change="readTXT">-->
-      </div>
-    </div>
-    <div class="left">
-      <a-tree
-          v-model="checkedKeys"
-          :auto-expand-parent="true"
-          :selected-keys="selectedKeys"
-          :tree-data="treeData"
-          @select="onTreeSelect"
-      />
-    </div>
+    <TopBar/>
+    <LeftBar/>
+    <!--    <div class="left">-->
+    <!--      <a-tree-->
+    <!--          v-model="checkedKeys"-->
+    <!--          :auto-expand-parent="true"-->
+    <!--          :selected-keys="selectedKeys"-->
+    <!--          :tree-data="treeData"-->
+    <!--          @select="onTreeSelect"-->
+    <!--      />-->
+    <!--    </div>-->
     <div id="webgl"></div>
     <div v-if="loading" id="load-mask">
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
@@ -169,25 +105,25 @@
           <a-form :form="flatForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
             <a-form-item label="起始切片高度">
               <a-input
-                  placeholder="输入起始切片高度"
-                  v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
+                placeholder="输入起始切片高度"
+                v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
               />
             </a-form-item>
             <a-form-item label="终止切片高度">
               <a-input
-                  placeholder="输入终止切片高度"
-                  v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
+                placeholder="输入终止切片高度"
+                v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
               />
             </a-form-item>
             <a-form-item label="层厚">
               <a-input
-                  placeholder="输入层厚"
-                  v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
+                placeholder="输入层厚"
+                v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
               />
             </a-form-item>
             <a-form-item label="绘制颜色">
               <colorPicker
-                  v-model="color"
+                v-model="color"
               />
             </a-form-item>
           </a-form>
@@ -200,31 +136,31 @@
           <a-form :form="coneForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
             <a-form-item label="起始切片半径">
               <a-input
-                  placeholder="输入起始切片半径"
-                  v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"
+                placeholder="输入起始切片半径"
+                v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"
               />
             </a-form-item>
             <a-form-item label="起始切片高度">
               <a-input
-                  placeholder="输入起始切片高度"
-                  v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
+                placeholder="输入起始切片高度"
+                v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
               />
             </a-form-item>
             <a-form-item label="终止切片高度">
               <a-input
-                  placeholder="输入终止切片高度"
-                  v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
+                placeholder="输入终止切片高度"
+                v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
               />
             </a-form-item>
             <a-form-item label="层厚">
               <a-input
-                  placeholder="输入层厚"
-                  v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
+                placeholder="输入层厚"
+                v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
               />
             </a-form-item>
             <a-form-item label="绘制颜色">
               <colorPicker
-                  v-model="color"
+                v-model="color"
               />
             </a-form-item>
           </a-form>
@@ -248,20 +184,20 @@ import {
   drawSTL,
   initialScene,
   handleReset,
-  handleEnlarge,
-  handleNarrow,
-  resetModel,
   showHide,
   makeHorizontalSlice,
 } from '@js/drawFunction';
+import TopBar from "@components/WorkPage/TopBar";
+import LeftBar from "@components/WorkPage/LeftBar";
 
 export default {
   name: "WorkPage",
+  components: {
+    TopBar,
+    LeftBar,
+  },
   data() {
     return {
-      handleEnlarge,
-      handleNarrow,
-      resetModel,
       showHide,
       currentModelName: '请选择模型',
       loading: false, // 是否加载中
