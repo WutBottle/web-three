@@ -1,8 +1,10 @@
 import * as Three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'stats.js';
-const leftNum = 40;
-const topNum = 29;
+
+const leftNum = 40; // 页面左侧菜单栏宽度
+const topNum = 29; // 页面顶部菜单栏高度
+let boundingBox = {}; // 包络盒信息
 let scene = new Three.Scene(); // 场景对象
 let camera = null; // 相机对象
 let renderer = new Three.WebGLRenderer(); // 创建渲染器对象
@@ -20,19 +22,21 @@ let initialSight = null; // 初始化模型视野
 /** 添加帧数监听 **/
 export const statsInit = () => {
   const stats = new Stats();
-  stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
   const wrapperDom = document.getElementById('statsWrapper');
-  wrapperDom.appendChild( stats.dom );
+  wrapperDom.appendChild(stats.dom);
   stats.dom.style.left = 'auto';
   stats.dom.style.right = '0';
   stats.dom.style.top = '30px';
+
   function animate() {
     stats.begin();
     // monitored code goes here
     stats.end();
-    requestAnimationFrame( animate );
+    requestAnimationFrame(animate);
   }
-  requestAnimationFrame( animate );
+
+  requestAnimationFrame(animate);
 }
 
 
@@ -103,7 +107,17 @@ export const initialScene = () => {
  * color: 绘制颜色
  * **/
 export const makeCone = (name, cylinderGeometryParameter) => {
-  const {startHeight, radiusTop, radiusBottom, height, radiusSegments, heightSegments, thick, openEnded, color} = cylinderGeometryParameter;
+  const {
+    startHeight,
+    radiusTop,
+    radiusBottom,
+    height,
+    radiusSegments,
+    heightSegments,
+    thick,
+    openEnded,
+    color
+  } = cylinderGeometryParameter;
   let groupArray = new Three.Group();
   groupArray.name = name;
   for (let i = 0; i < Math.floor(height / thick); i++) {
@@ -270,6 +284,12 @@ export const createSurroundBox = (data) => {
   group.visible = false;
   group.add(helper, ballMesh);
   scene.add(group);
+  drawText('这是我的模型', {
+    fontsize: 20,
+    borderColor: {r: 255, g: 0, b: 0, a: 0.4},
+    backgroundColor: {r: 255, g: 255, b: 255, a: 0.9},
+    position: {x: 10, y: -5, z: 0}
+  })
 }
 
 /** 计算geometry合适视野
@@ -290,8 +310,9 @@ export const computeSight = (data) => {
 export const drawSTL = (geometry, name) => {
   // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
   geometry.computeBoundingBox();
-  createSurroundBox(geometry.boundingBox);
-  initialSight = computeSight(geometry.boundingBox);
+  boundingBox = geometry.boundingBox;
+  createSurroundBox(boundingBox);
+  initialSight = computeSight(boundingBox);
   let material = new Three.MeshLambertMaterial({
     color: 0x29d6d6,
     side: Three.DoubleSide,
@@ -446,4 +467,79 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     groupArray.add(group)
   }
   scene.add(groupArray);
+}
+
+/** 绘制圆角矩形 **/
+const roundRect = (ctx, x, y, w, h, r) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+/** 动画效果绘制线 **/
+export const drawText = (text, params) => {
+  if (params === undefined) params = {};
+  /* 字体 */
+  const fontface = Object.prototype.hasOwnProperty.call(params, "fontface") ? params['fontface'] : 'Arial';
+  const fontsize = Object.prototype.hasOwnProperty.call(params, "fontsize") ? params['fontsize'] : '20';
+  /* 字体大小 */
+  const borderThickness = Object.prototype.hasOwnProperty.call(params, "borderThickness") ? params["borderThickness"] : 4;
+  /* 边框颜色 */
+  const borderColor = Object.prototype.hasOwnProperty.call(params, "borderColor") ? params["borderColor"] : {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 1.0
+  };
+  /* 背景颜色 */
+  const backgroundColor = Object.prototype.hasOwnProperty.call(params, "backgroundColor") ? params["backgroundColor"] : {
+    r: 255,
+    g: 255,
+    b: 255,
+    a: 1.0
+  };
+  /* 绘制位置 */
+  const position = Object.prototype.hasOwnProperty.call(params, 'position') ? params['position'] : {x: 0, y: 0, z: 0};
+  /* 创建画布 */
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  /* 字体加粗 */
+  context.font = "Bold " + fontsize + "px " + fontface;
+  /* 获取文字的大小数据，高度取决于文字的大小 */
+  const metrics = context.measureText(text);
+  const textWidth = metrics.width;
+  /* 背景颜色 */
+  context.fillStyle = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+    + backgroundColor.b + "," + backgroundColor.a + ")";
+  /* 边框的颜色 */
+  context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+    + borderColor.b + "," + borderColor.a + ")";
+  context.lineWidth = borderThickness;
+  /* 绘制圆角矩形 */
+  roundRect(context, borderThickness / 2, borderThickness / 2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
+  /* 字体颜色 */
+  context.fillStyle = "rgba(0, 0, 0, 1.0)";
+  context.fillText(text, borderThickness, fontsize + borderThickness);
+  /* 画布内容用于纹理贴图 */
+  const texture = new Three.Texture(canvas);
+  texture.needsUpdate = true;
+  const spriteMaterial = new Three.SpriteMaterial({map: texture});
+  const sprite = new Three.Sprite(spriteMaterial);
+  /* 缩放比例 */
+  const XScale = Math.abs(Math.floor((boundingBox.max.x - boundingBox.min.x)));
+  const YScale = -Math.abs(Math.floor((boundingBox.max.y - boundingBox.min.y) * 0.5));
+  sprite.scale.set(XScale,YScale, 0);
+  sprite.center = new Three.Vector2(0, 0);
+  sprite.position.set(position.x, position.y, position.z);
+  scene.add(sprite);
 }
