@@ -232,7 +232,7 @@ export default {
     window.onresize = () => {
       handleReset(); // 处理页面放缩
     };
-    this.modelFile = this.$route.params.modelFileUrl;
+    this.modelFile = window.sessionStorage.getItem('currentModelUrl') || '';
     this.loaderSTL(this.modelFile);
   },
   methods: {

@@ -50,7 +50,7 @@
               <a-icon type="save"/>
               <span>另存为</span>
             </span>
-            <a-menu-item key="saveAsSTL">
+            <a-menu-item key="stl" @click="() => this.setNameVisible = true">
               .STL
             </a-menu-item>
           </a-sub-menu>
@@ -66,11 +66,43 @@
       <button>图层</button>
       <button>功能</button>
     </span>
+    <a-modal
+      title="导出文件名称"
+      :visible="setNameVisible"
+      okText="导出"
+      cancelText="取消"
+      @ok="handleSaveSTL"
+    >
+      <a-input v-model="saveName" placeholder="请输入文件名" />
+    </a-modal>
   </div>
 </template>
 
 <script>
+import {saveAsSTL} from '@js/fileSave';
+import {
+  findObjectByName
+} from '@js/drawFunction';
+
 export default {
-  name: "TopBar"
+  name: "TopBar",
+  data() {
+    return {
+      setNameVisible: false,
+      saveName: '',
+    }
+  },
+  methods: {
+    handleSaveSTL() {
+      if(this.saveName) {
+        saveAsSTL(findObjectByName(window.sessionStorage.getItem('currentModelUrl')), this.saveName);
+        this.setNameVisible = false;
+        this.saveName = '';
+        this.$message.success('导出成功');
+      }else {
+        this.$message.info('请输入文件名');
+      }
+    }
+  }
 }
 </script>

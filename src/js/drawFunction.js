@@ -298,9 +298,10 @@ export const drawSTL = (geometry, name) => {
     wireframe: false,
   }); //材质对象Material
   let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
+  mesh.name = name;
   let group = new Three.Group();
-  group.name = name;
-  group.add(mesh);
+  group.name = 'targetGroup';
+  group.add(mesh)
   scene.add(group); //网格模型添加到场景中
   drawGrid(initialSight);
   drawAxis(initialSight);
@@ -347,12 +348,20 @@ export const handleNarrow = () => {
   render();
 }
 
+/** 通过name得到相关对象
+ * name: Group的name
+ * **/
+export const findObjectByName = (name) => {
+  return scene.getObjectByName(name);
+}
+
 /** 控制group显示或隐藏
  * name: Group的name
  * **/
 export const showHide = (name) => {
-  if (scene.getObjectByName(name)) {
-    scene.getObjectByName(name).visible = !scene.getObjectByName(name).visible;
+  const status = findObjectByName(name);
+  if (status) {
+    status.visible = !status.visible;
     render();
   }
 }

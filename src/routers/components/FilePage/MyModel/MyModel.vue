@@ -307,7 +307,8 @@ export default {
         okType: 'primary',
         cancelText: '取消',
         onOk: () => {
-          this.$router.push({name: 'WorkPage', params: {modelFileUrl: data.modelFileName}});
+          window.sessionStorage.setItem('currentModelUrl', data.modelFileName)
+          this.$router.push('/work');
         },
       });
     },
