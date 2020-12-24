@@ -124,7 +124,9 @@ export const makeCone = (name, cylinderGeometryParameter) => {
     let geometry = new Three.CylinderGeometry(radiusTop, radiusBottom + i * thick, height + i * thick, radiusSegments, heightSegments, openEnded);
     let cylinder = new Three.Mesh(geometry, new Three.MeshLambertMaterial({
       color: color,
-      wireframe: true,
+      transparent: true,
+      opacity: 0.3,
+      side: Three.DoubleSide,
     }));
     let group = new Three.Group();
     group.name = name + i;
