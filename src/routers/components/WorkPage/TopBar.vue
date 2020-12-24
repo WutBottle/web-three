@@ -55,7 +55,7 @@
             </a-menu-item>
           </a-sub-menu>
           <a-menu-divider/>
-          <a-menu-item key="quit" @click="() => this.$router.push('file')">
+          <a-menu-item key="quit" @click="handleQuit">
             <a-icon type="left-square"/>
             退出编辑
           </a-menu-item>
@@ -64,7 +64,16 @@
       <button>编辑</button>
       <button>图像</button>
       <button>图层</button>
-      <button>功能</button>
+      <a-dropdown :trigger="['click']">
+        <a class="ant-dropdown-link" @click="e => e.preventDefault()">
+          <button>功能</button>
+        </a>
+        <a-menu slot="overlay">
+          <a-menu-item key="slice" @click="() => this.sliceFormVisible = true">
+            切片
+          </a-menu-item>
+        </a-menu>
+      </a-dropdown>
     </span>
     <a-modal
       title="导出文件名称"
@@ -81,18 +90,25 @@
 <script>
 import {saveAsSTL} from '@js/fileSave';
 import {
-  findObjectByName
+  findObjectByName,
+  removeAll
 } from '@js/drawFunction';
 
 export default {
   name: "TopBar",
   data() {
     return {
-      setNameVisible: false,
+      setNameVisible: false, // 导出文件名字弹窗控制
+      sliceFormVisible: false, // 切片信息输入弹窗控制
       saveName: '',
     }
   },
+  // 页面后退后清除数据
+  destroyed() {
+    removeAll();
+  },
   methods: {
+    // 处理导出stl文件
     handleSaveSTL() {
       if(this.saveName) {
         saveAsSTL(findObjectByName(window.sessionStorage.getItem('currentModelUrl')), this.saveName);
@@ -102,6 +118,12 @@ export default {
       }else {
         this.$message.info('请输入文件名');
       }
+    },
+    // 处理退出编辑页面
+    handleQuit() {
+      removeAll();
+      window.sessionStorage.clear();
+      this.$router.push('file');
     }
   }
 }

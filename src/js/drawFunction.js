@@ -153,6 +153,14 @@ export const removeGroup = () => {
   }
 }
 
+/** 清除场景内所有对象 **/
+export const removeAll = () => {
+  let allChildren = scene.children;
+  for (let i = allChildren.length - 1; i >= 0; i--) {
+    scene.remove(allChildren[i]);
+  }
+}
+
 /** 绘制底部网格
  * len: 默认线段长度
  * **/
@@ -285,11 +293,11 @@ export const createSurroundBox = (data) => {
   group.add(helper, ballMesh);
   scene.add(group);
   drawText('这是我的模型', {
-    fontsize: 20,
-    borderColor: {r: 255, g: 0, b: 0, a: 0.4},
-    backgroundColor: {r: 255, g: 255, b: 255, a: 0.9},
+    fontsize: 30,
+    borderColor: {r: 0, g: 0, b: 0, a: 1},
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1},
     position: {x: 10, y: -5, z: 0}
-  })
+  }, 'surroundBox')
 }
 
 /** 计算geometry合适视野
@@ -487,12 +495,12 @@ const roundRect = (ctx, x, y, w, h, r) => {
 }
 
 /** 动画效果绘制线 **/
-export const drawText = (text, params) => {
+export const drawText = (text, params, groupName) => {
   if (params === undefined) params = {};
   /* 字体 */
   const fontface = Object.prototype.hasOwnProperty.call(params, "fontface") ? params['fontface'] : 'Arial';
-  const fontsize = Object.prototype.hasOwnProperty.call(params, "fontsize") ? params['fontsize'] : '20';
   /* 字体大小 */
+  const fontsize = Object.prototype.hasOwnProperty.call(params, "fontsize") ? params['fontsize'] : '20';
   const borderThickness = Object.prototype.hasOwnProperty.call(params, "borderThickness") ? params["borderThickness"] : 4;
   /* 边框颜色 */
   const borderColor = Object.prototype.hasOwnProperty.call(params, "borderColor") ? params["borderColor"] : {
@@ -528,7 +536,7 @@ export const drawText = (text, params) => {
   /* 绘制圆角矩形 */
   roundRect(context, borderThickness / 2, borderThickness / 2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
   /* 字体颜色 */
-  context.fillStyle = "rgba(0, 0, 0, 1.0)";
+  context.fillStyle = "rgba(255, 255, 255, 1)";
   context.fillText(text, borderThickness, fontsize + borderThickness);
   /* 画布内容用于纹理贴图 */
   const texture = new Three.Texture(canvas);
@@ -538,8 +546,8 @@ export const drawText = (text, params) => {
   /* 缩放比例 */
   const XScale = Math.abs(Math.floor((boundingBox.max.x - boundingBox.min.x)));
   const YScale = -Math.abs(Math.floor((boundingBox.max.y - boundingBox.min.y) * 0.5));
-  sprite.scale.set(XScale,YScale, 0);
+  sprite.scale.set(XScale, YScale, 0);
   sprite.center = new Three.Vector2(0, 0);
   sprite.position.set(position.x, position.y, position.z);
-  scene.add(sprite);
+  findObjectByName(groupName).add(sprite);
 }
