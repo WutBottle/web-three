@@ -292,7 +292,7 @@ export const createSurroundBox = (data) => {
   group.visible = false;
   group.add(helper, ballMesh);
   scene.add(group);
-  drawText('这是我的模型', {
+  drawText('这是包络盒', {
     fontsize: 30,
     borderColor: {r: 0, g: 0, b: 0, a: 1},
     backgroundColor: {r: 0, g: 0, b: 0, a: 1},
@@ -324,7 +324,7 @@ export const drawSTL = (geometry, name) => {
   let material = new Three.MeshLambertMaterial({
     color: 0x29d6d6,
     side: Three.DoubleSide,
-    wireframe: false,
+    wireframe: true,
   }); //材质对象Material
   let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
   mesh.name = name;
@@ -459,11 +459,15 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
   let groupArray = new Three.Group();
   groupArray.name = name;
   const layersNum = Math.floor((endHeight - startHeight) / thick);
+  const planeWidth = Math.abs(boundingBox.max.x - boundingBox.min.x);
+  const planeHeight = Math.abs(boundingBox.max.y - boundingBox.min.y);
   for (let i = 0; i < layersNum; i++) {
-    const plane = new Three.PlaneGeometry(800, 800)
-    const material = new Three.MeshPhongMaterial({
+    const plane = new Three.PlaneGeometry(planeWidth, planeHeight)
+    const material = new Three.MeshBasicMaterial({
       color: color,
       side: Three.DoubleSide,
+      opacity: 0.5,
+      transparent: true,
     })
     const mesh = new Three.Mesh(plane, material)
     let group = new Three.Group();
@@ -471,8 +475,8 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     group.name = name + i;
     group.position.x = 0;
     group.position.y = 0;
-    group.position.z = i * thick;
-    groupArray.add(group)
+    group.position.z = startHeight + i * thick;
+    groupArray.add(group);
   }
   scene.add(groupArray);
 }

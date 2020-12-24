@@ -82,7 +82,80 @@
       cancelText="取消"
       @ok="handleSaveSTL"
     >
-      <a-input v-model="saveName" placeholder="请输入文件名" />
+      <a-input v-model="saveName" placeholder="请输入文件名"/>
+    </a-modal>
+    <a-modal v-model="sliceFormVisible" title="切片" @ok="handleSliceOk" cancelText="取消" okText="确认"
+             :maskClosable="false">
+      <a-tabs v-model="sliceTabsKey">
+        <a-tab-pane key="flat">
+          <span slot="tab">
+            <i class="iconfont icon-flat-slice"></i>
+            平面切片
+          </span>
+          <a-form :form="flatForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
+            <a-form-item label="起始切片高度">
+              <a-input
+                placeholder="输入起始切片高度"
+                v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="终止切片高度">
+              <a-input
+                placeholder="输入终止切片高度"
+                v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="层厚">
+              <a-input
+                placeholder="输入层厚"
+                v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="绘制颜色">
+              <colorPicker
+                v-model="color"
+              />
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+        <a-tab-pane key="cone">
+          <span slot="tab">
+            <i class="iconfont icon-cone"></i>
+            锥面切片
+          </span>
+          <a-form :form="coneForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
+            <a-form-item label="起始切片半径">
+              <a-input
+                placeholder="输入起始切片半径"
+                v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="起始切片高度">
+              <a-input
+                placeholder="输入起始切片高度"
+                v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="终止切片高度">
+              <a-input
+                placeholder="输入终止切片高度"
+                v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="层厚">
+              <a-input
+                placeholder="输入层厚"
+                v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
+              />
+            </a-form-item>
+            <a-form-item label="绘制颜色">
+              <colorPicker
+                v-model="color"
+              />
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+      </a-tabs>
     </a-modal>
   </div>
 </template>
@@ -91,7 +164,11 @@
 import {saveAsSTL} from '@js/fileSave';
 import {
   findObjectByName,
-  removeAll
+  makeCone,
+  makeHorizontalSlice,
+  removeObject,
+  removeAll,
+  render
 } from '@js/drawFunction';
 
 export default {
@@ -99,8 +176,25 @@ export default {
   data() {
     return {
       setNameVisible: false, // 导出文件名字弹窗控制
-      sliceFormVisible: false, // 切片信息输入弹窗控制
       saveName: '',
+      sliceFormVisible: false, // 切片信息输入弹窗控制
+      sliceTabsKey: 'flat', // 切片信息面板
+      coneForm: this.$form.createForm(this, {name: 'coneForm'}), // 锥面切片表单
+      flatForm: this.$form.createForm(this, {name: 'flatForm'}), // 平面切片表单
+      cylinderGeometryParameter: { //
+        radiusTop: 20, // 顶部半径
+        radiusBottom: 20, // 底部半径
+        height: 100, // 高度
+        radiusSegments: 8, // 圆截面分段数
+        heightSegments: 1, // 竖直方向分段数
+        openEnded: false, // 圆柱体顶部或底部是否打开
+      },
+      horizontalSliceParameter: {
+        startHeight: 0, // 起始高度
+        endHeight: 100, // 终止高度
+        thick: 20, // 厚度
+      }, // 水平切片
+      color: '#ff0000', // 选择颜色
     }
   },
   // 页面后退后清除数据
@@ -110,12 +204,12 @@ export default {
   methods: {
     // 处理导出stl文件
     handleSaveSTL() {
-      if(this.saveName) {
+      if (this.saveName) {
         saveAsSTL(findObjectByName(window.sessionStorage.getItem('currentModelUrl')), this.saveName);
         this.setNameVisible = false;
         this.saveName = '';
         this.$message.success('导出成功');
-      }else {
+      } else {
         this.$message.info('请输入文件名');
       }
     },
@@ -124,7 +218,46 @@ export default {
       removeAll();
       window.sessionStorage.clear();
       this.$router.push('file');
-    }
+    },
+    // 生成切片信息
+    handleSliceOk() {
+      // 水平切片
+      this.sliceTabsKey === 'flat' && this.flatForm.validateFields((err, values) => {
+        if (!err) {
+          Object.assign(this.horizontalSliceParameter, {
+            startHeight: Number(values.startHeight),
+            endHeight: Number(values.endHeight),
+            thick: Number(values.sliceThick),
+            color: this.color,
+          })
+          removeObject('horizontalSlice'); // 移除切片
+          makeHorizontalSlice('horizontalSlice', this.horizontalSliceParameter);
+          render();
+          this.sliceFormVisible = false;
+        }
+      })
+      // 椎体切片
+      this.sliceTabsKey === 'cone' && this.coneForm.validateFields((err, values) => {
+        if (!err) {
+          Object.assign(this.cylinderGeometryParameter, {
+            startHeight: Number(values.startHeight),
+            radiusTop: 0,
+            radiusBottom: Number(values.startRadius),
+            height: Number(values.endHeight - values.startHeight),
+            thick: Number(values.sliceThick),
+            color: this.color,
+            radiusSegments: 20,
+            heightSegments: 20,
+            openEnded: true,
+          });
+          removeObject('cone')
+          makeCone('cone', this.cylinderGeometryParameter);
+          render();
+          this.sliceFormVisible = false;
+          // this.coneForm.resetFields();
+        }
+      });
+    },
   }
 }
 </script>
