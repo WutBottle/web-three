@@ -72,6 +72,9 @@
           <a-menu-item key="slice" @click="() => this.sliceFormVisible = true">
             切片
           </a-menu-item>
+          <a-menu-item key="animation" @click="playAnimation">
+            动画
+          </a-menu-item>
         </a-menu>
       </a-dropdown>
     </span>
@@ -168,7 +171,8 @@ import {
   makeHorizontalSlice,
   removeObject,
   removeAll,
-  render
+  render,
+  animationDrawLine
 } from '@js/drawFunction';
 
 export default {
@@ -258,6 +262,10 @@ export default {
         }
       });
     },
+    // 播放动画
+    playAnimation() {
+      animationDrawLine();
+    }
   }
 }
 </script>

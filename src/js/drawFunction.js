@@ -8,8 +8,6 @@ let boundingBox = {}; // 包络盒信息
 let scene = new Three.Scene(); // 场景对象
 let camera = null; // 相机对象
 let renderer = new Three.WebGLRenderer(); // 创建渲染器对象
-let point = null; // 光源设置 点光源
-let ambient = null; // 环境光
 let width = window.innerWidth - leftNum; // 窗口宽度
 let height = window.innerHeight - topNum; // 窗口高度
 let k = null; // 窗口宽高比
@@ -18,6 +16,9 @@ let controls = {}; // 创建控件对象
 let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
+
+let testAnimationData = []; // 动画轨迹测试数据
+let currentBuffGeometryPoint = []; // 当前模型点云数据
 
 /** 添加帧数监听 **/
 export const statsInit = () => {
@@ -52,10 +53,19 @@ export const removeObject = (name) => {
 
 /** 初始化Light **/
 export const initialLight = () => {
-  point = new Three.PointLight(0x11ffff);
-  ambient = new Three.AmbientLight(0x444444);
-  point.position.set(200, 100, 300); //点光源位置
-  scene.add(point); // 点光源添加到场景中
+  let directionalLightLeft = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
+  directionalLightLeft.position.set(0, 0, 1000);
+  let ambient = null; // 环境光
+  // point = new Three.PointLight(0x11ffff);
+  // point.position.set(200, 100, 300); //点光源位置
+  // scene.add(point); // 点光源添加到场景中
+  // point = new Three.PointLight(0x11ffff);
+  // point.position.set(-200, -100, -300); //点光源位置
+  scene.add(directionalLightLeft); // 点光源添加到场景中
+  let directionalLightRight = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
+  directionalLightRight.position.set(0, 0, -1000);
+  scene.add(directionalLightRight); // 点光源添加到场景中
+  ambient = new Three.AmbientLight(0xffffff);
   scene.add(ambient); // 环境光添加到场景中
 }
 
@@ -95,49 +105,6 @@ export const initialScene = () => {
   drawGrid();
   orbitControls(); // 添加鼠标控制
   render();
-}
-
-/** 绘制椎体所需参数
- * radiusTop: 上底半径
- * radiusBottom: 下底半径
- * height: 椎体高度
- * radiusSegments: 半径绘制密度
- * heightSegments: 高度绘制密度
- * openEnded: 底部是否开合
- * color: 绘制颜色
- * **/
-export const makeCone = (name, cylinderGeometryParameter) => {
-  const {
-    startHeight,
-    radiusTop,
-    radiusBottom,
-    height,
-    radiusSegments,
-    heightSegments,
-    thick,
-    openEnded,
-    color
-  } = cylinderGeometryParameter;
-  let groupArray = new Three.Group();
-  groupArray.name = name;
-  for (let i = 0; i < Math.floor(height / thick); i++) {
-    let geometry = new Three.CylinderGeometry(radiusTop, radiusBottom + i * thick, height + i * thick, radiusSegments, heightSegments, openEnded);
-    let cylinder = new Three.Mesh(geometry, new Three.MeshLambertMaterial({
-      color: color,
-      transparent: true,
-      opacity: 0.3,
-      side: Three.DoubleSide,
-    }));
-    let group = new Three.Group();
-    group.name = name + i;
-    group.add(cylinder);
-    group.rotateX(Math.PI / 2)
-    group.position.x = 0;
-    group.position.y = 0;
-    group.position.z = startHeight + height / 2 + i * thick / 2;
-    groupArray.add(group);
-  }
-  scene.add(groupArray);
 }
 
 /** 执行渲染 **/
@@ -320,6 +287,7 @@ export const computeSight = (data) => {
 export const drawSTL = (geometry, name) => {
   // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
   geometry.computeBoundingBox();
+  currentBuffGeometryPoint = geometry.attributes.position.array;
   boundingBox = geometry.boundingBox;
   createSurroundBox(boundingBox);
   initialSight = computeSight(boundingBox);
@@ -399,20 +367,14 @@ export const showHide = (name) => {
 
 /** 动画效果绘制线 **/
 export const animationDrawLine = () => {
-  let curve = new Three.CatmullRomCurve3([
-    new Three.Vector3(-600, 0, 300),
-    new Three.Vector3(-300, 300, 0),
-    new Three.Vector3(0, 0, 0),
-    new Three.Vector3(300, 300, 0),
-    new Three.Vector3(600, 0, -300)
-  ], false/*是否闭合*/);
+  let curve = new Three.CatmullRomCurve3(testAnimationData, false/*是否闭合*/);
 
   let tubeGeometry = new Three.TubeGeometry(curve, 100, 1, 100, false);
   let tubeMaterial = new Three.MeshBasicMaterial({color: 0xbbff00, wireframe: false})
   let tube = new Three.Mesh(tubeGeometry, tubeMaterial);
   scene.add(tube);
 
-  let box = new Three.SphereGeometry(50, 20, 20);
+  let box = new Three.SphereGeometry(1, 20, 20);
   let material = new Three.MeshBasicMaterial({
     color: 0x7777ff
   }); //材质对象
@@ -442,7 +404,7 @@ export const animationDrawLine = () => {
   let clip = new Three.AnimationClip("default", duration, [posTrack]);
   let mixer = new Three.AnimationMixer(mesh);
   let AnimationAction = mixer.clipAction(clip);
-  AnimationAction.timeScale = 10; // 调节播放速度
+  AnimationAction.timeScale = 3; // 调节播放速度
   AnimationAction.play();
 
   let clock = new Three.Clock();
@@ -468,7 +430,7 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     const material = new Three.MeshBasicMaterial({
       color: color,
       side: Three.DoubleSide,
-      opacity: 0.5,
+      opacity: 0.3,
       transparent: true,
     })
     const mesh = new Three.Mesh(plane, material)
@@ -478,6 +440,70 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     group.position.x = 0;
     group.position.y = 0;
     group.position.z = startHeight + i * thick;
+    groupArray.add(group);
+  }
+  scene.add(groupArray);
+  drawPointByPoints(calculateHorizontalSlice(startHeight), 'horizontalTrace', color)
+  ;
+}
+
+/** 根据点数组绘制点图形 **/
+const drawPointByPoints = (data, name, color) => {
+  const geometry = new Three.Geometry();//声明一个空几何体对象
+  data.forEach(item => {
+    geometry.vertices.push(new Three.Vector3(item.x, item.y, item.z)); //顶点坐标添加到geometry对象
+  })
+  const material = new Three.PointsMaterial({
+    color: color,
+    size: 10
+  });//材质对象
+  const points = new Three.Points(geometry, material);//点模型对象
+  scene.add(points);//点对象添加到场景中
+  points.name = name;
+  render();
+}
+
+/** 根据点数组绘制曲线图形 **/
+
+
+/** 绘制椎体所需参数
+ * radiusTop: 上底半径
+ * radiusBottom: 下底半径
+ * height: 椎体高度
+ * radiusSegments: 半径绘制密度
+ * heightSegments: 高度绘制密度
+ * openEnded: 底部是否开合
+ * color: 绘制颜色
+ * **/
+export const makeCone = (name, cylinderGeometryParameter) => {
+  const {
+    startHeight,
+    radiusTop,
+    radiusBottom,
+    height,
+    radiusSegments,
+    heightSegments,
+    thick,
+    openEnded,
+    color
+  } = cylinderGeometryParameter;
+  let groupArray = new Three.Group();
+  groupArray.name = name;
+  for (let i = 0; i < Math.floor(height / thick); i++) {
+    let geometry = new Three.CylinderGeometry(radiusTop, radiusBottom + i * thick, height + i * thick, radiusSegments, heightSegments, openEnded);
+    let cylinder = new Three.Mesh(geometry, new Three.MeshLambertMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.3,
+      side: Three.DoubleSide,
+    }));
+    let group = new Three.Group();
+    group.name = name + i;
+    group.add(cylinder);
+    group.rotateX(Math.PI / 2)
+    group.position.x = 0;
+    group.position.y = 0;
+    group.position.z = startHeight + height / 2 + i * thick / 2;
     groupArray.add(group);
   }
   scene.add(groupArray);
@@ -556,4 +582,49 @@ export const drawText = (text, params, groupName) => {
   sprite.center = new Three.Vector2(0, 0);
   sprite.position.set(position.x, position.y, position.z);
   findObjectByName(groupName).add(sprite);
+}
+
+/** 计算水平切片轨迹 **/
+const calculateHorizontalSlice = (zHeight) => {
+  let resultData = [];
+  // 每三个点为一个单元计算
+  const unitCal = (p1, p2) => {
+    const arrayToObject = (pointArray) => {
+      return {
+        x: pointArray[0],
+        y: pointArray[1],
+        z: pointArray[2],
+      }
+    }
+    if ((p1[2] > zHeight && p2[2] > zHeight) || (p1[2] < zHeight && p2[2] < zHeight)) {
+      return [];
+    } else if (p1[2] === zHeight && p2[2] === zHeight) {
+      return [arrayToObject(p1), arrayToObject(p2)];
+    } else if (p1[2] === zHeight && p2[2] !== zHeight) {
+      return [arrayToObject(p1)];
+    } else if (p1[2] !== zHeight && p2[2] === zHeight) {
+      return [arrayToObject(p2)];
+    } else {
+      const k = (zHeight - p1[2]) / (zHeight - p2[2]);
+      let res = new Array(3);
+      res[0] = (p1[0] - k * p2[0]) / (1 - k);
+      res[1] = (p1[1] - k * p2[1]) / (1 - k);
+      res[2] = zHeight;
+      return [arrayToObject(res)];
+    }
+  }
+  for (let i = 0; i < currentBuffGeometryPoint.length; i += 9) {
+    resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i, i + 3), currentBuffGeometryPoint.slice(i + 3, i + 6)));
+    resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i + 3, i + 6), currentBuffGeometryPoint.slice(i + 6, i + 9)));
+    resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i, i + 3), currentBuffGeometryPoint.slice(i + 6, i + 9)));
+  }
+  // 数组去重
+  const unique = (arr) => {
+    let obj = {};
+    return arr.reduce((item, next) => {
+      obj[next.x.toString() + next.y.toString()] ? '' : obj[next.x.toString() + next.y.toString()] = item.push(next);
+      return item;
+    }, []);
+  }
+  return unique(resultData);
 }
