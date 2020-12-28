@@ -443,28 +443,48 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     groupArray.add(group);
   }
   scene.add(groupArray);
-  drawPointByPoints(calculateHorizontalSlice(startHeight), 'horizontalTrace', color)
-  ;
+  const slicePointData = calculateHorizontalSlice(startHeight);
+  // drawLineByPoints(slicePointData, 'horizontalTrace', color);
+  drawPointByPoints(slicePointData, 'horizontalTrace', color);
 }
 
 /** 根据点数组绘制点图形 **/
 const drawPointByPoints = (data, name, color) => {
+  console.log(data);
   const geometry = new Three.Geometry();//声明一个空几何体对象
   data.forEach(item => {
     geometry.vertices.push(new Three.Vector3(item.x, item.y, item.z)); //顶点坐标添加到geometry对象
   })
   const material = new Three.PointsMaterial({
     color: color,
-    size: 10
+    size: 8
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
-  scene.add(points);//点对象添加到场景中
   points.name = name;
+  scene.add(points);//点对象添加到场景中
   render();
 }
 
-/** 根据点数组绘制曲线图形 **/
-
+/** 根据点数组绘制包围轨迹图形 **/
+// const drawLineByPoints = (data, name, color) => {
+//   const curve = new Three.CatmullRomCurve3(
+//     data.map(item => {
+//       return new Three.Vector3(item.x, item.y, item.z)
+//     })
+//   );
+//   const points = curve.getPoints(50);
+//   const geometry = new Three.BufferGeometry().setFromPoints(points);
+//   const material = new Three.LineBasicMaterial({
+//     color: color,
+//     linewidth: 100,
+//     linecap: 'round',
+//     linejoin:  'round',
+//   });
+//   // Create the final object to add to the scene
+//   const curveObject = new Three.Line(geometry, material);
+//   curveObject.name = name;
+//   scene.add(curveObject);
+// }
 
 /** 绘制椎体所需参数
  * radiusTop: 上底半径
@@ -584,33 +604,49 @@ export const drawText = (text, params, groupName) => {
   findObjectByName(groupName).add(sprite);
 }
 
+/** 解决float精度计算丢失 **/
+Math.formatFloat = (f, digit) => {
+  const m = Math.pow(10, digit);
+  return Math.round(f * m) / m;
+}
+
 /** 计算水平切片轨迹 **/
 const calculateHorizontalSlice = (zHeight) => {
   let resultData = [];
+  let hasCalLine = [];
   // 每三个点为一个单元计算
   const unitCal = (p1, p2) => {
-    const arrayToObject = (pointArray) => {
-      return {
-        x: pointArray[0],
-        y: pointArray[1],
-        z: pointArray[2],
-      }
-    }
-    if ((p1[2] > zHeight && p2[2] > zHeight) || (p1[2] < zHeight && p2[2] < zHeight)) {
+    const key1 = JSON.stringify(p1) + JSON.stringify(p2);
+    const key2 = JSON.stringify(p2) + JSON.stringify(p1);
+    if (hasCalLine.includes(key1) || hasCalLine.includes(key2)) {
       return [];
-    } else if (p1[2] === zHeight && p2[2] === zHeight) {
-      return [arrayToObject(p1), arrayToObject(p2)];
-    } else if (p1[2] === zHeight && p2[2] !== zHeight) {
-      return [arrayToObject(p1)];
-    } else if (p1[2] !== zHeight && p2[2] === zHeight) {
-      return [arrayToObject(p2)];
     } else {
-      const k = (zHeight - p1[2]) / (zHeight - p2[2]);
-      let res = new Array(3);
-      res[0] = (p1[0] - k * p2[0]) / (1 - k);
-      res[1] = (p1[1] - k * p2[1]) / (1 - k);
-      res[2] = zHeight;
-      return [arrayToObject(res)];
+      hasCalLine.push(key1);
+      const arrayToObject = (pointArray) => {
+        return {
+          x: pointArray[0],
+          y: pointArray[1],
+          z: pointArray[2],
+        }
+      }
+      const p1z = Math.formatFloat(p1[2], 5);
+      const p2z = Math.formatFloat(p2[2], 5);
+      if ((p1z > zHeight && p2z > zHeight) || (p1z < zHeight && p2z < zHeight)) {
+        return [];
+      } else if (p1z === zHeight && p2z === zHeight) {
+        return [arrayToObject(p1), arrayToObject(p2)];
+      } else if (p1z === zHeight && p2z !== zHeight) {
+        return [arrayToObject(p1)];
+      } else if (p1z !== zHeight && p2z === zHeight) {
+        return [arrayToObject(p2)];
+      } else {
+        const k = (zHeight - p1[2]) / (zHeight - p2[2]);
+        let res = new Array(3);
+        res[0] = Math.formatFloat((p1[0] - k * p2[0]) / (1 - k), 5);
+        res[1] = Math.formatFloat((p1[1] - k * p2[1]) / (1 - k), 5);
+        res[2] = zHeight;
+        return [arrayToObject(res)];
+      }
     }
   }
   for (let i = 0; i < currentBuffGeometryPoint.length; i += 9) {
