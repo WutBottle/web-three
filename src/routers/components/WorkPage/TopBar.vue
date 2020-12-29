@@ -172,7 +172,7 @@ import {
   removeObject,
   removeAll,
   render,
-  animationDrawLine
+  // animationDrawLine
 } from '@js/drawFunction';
 
 export default {
@@ -264,7 +264,8 @@ export default {
     },
     // 播放动画
     playAnimation() {
-      animationDrawLine();
+      this.$message.info('该功能正在开发中...')
+      // animationDrawLine();
     }
   }
 }

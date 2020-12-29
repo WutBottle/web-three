@@ -420,12 +420,13 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
   const layersNum = Math.floor((endHeight - startHeight) / thick);
   const planeWidth = Math.abs(boundingBox.max.x - boundingBox.min.x);
   const planeHeight = Math.abs(boundingBox.max.y - boundingBox.min.y);
+  let layersData = [];
   for (let i = 0; i < layersNum; i++) {
     const plane = new Three.PlaneGeometry(planeWidth, planeHeight)
     const material = new Three.MeshBasicMaterial({
       color: color,
       side: Three.DoubleSide,
-      opacity: 0.3,
+      opacity: 0.2,
       transparent: true,
     })
     const mesh = new Three.Mesh(plane, material)
@@ -436,11 +437,17 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     group.position.y = 0;
     group.position.z = startHeight + i * thick;
     groupArray.add(group);
+    layersData.push(startHeight + i * thick);
   }
   scene.add(groupArray);
-  const slicePointData = calculateHorizontalSlice(startHeight);
-  drawPointByPoints(slicePointData, name, color);
-  drawLineByPoints(slicePointData, name, color);
+  const createSliceLayer = (data) => {
+    data.forEach(item => {
+      const slicePointData = calculateHorizontalSlice(item);
+      drawPointByPoints(slicePointData, name, color);
+      drawLineByPoints(slicePointData, name, color);
+    })
+  }
+  createSliceLayer(layersData);
 }
 
 /** 根据点数组绘制点图形 **/
