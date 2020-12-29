@@ -55,12 +55,7 @@ export const removeObject = (name) => {
 export const initialLight = () => {
   let directionalLightLeft = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
   directionalLightLeft.position.set(0, 0, 1000);
-  let ambient = null; // 环境光
-  // point = new Three.PointLight(0x11ffff);
-  // point.position.set(200, 100, 300); //点光源位置
-  // scene.add(point); // 点光源添加到场景中
-  // point = new Three.PointLight(0x11ffff);
-  // point.position.set(-200, -100, -300); //点光源位置
+  let ambient; // 环境光
   scene.add(directionalLightLeft); // 点光源添加到场景中
   let directionalLightRight = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
   directionalLightRight.position.set(0, 0, -1000);
@@ -444,13 +439,12 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
   }
   scene.add(groupArray);
   const slicePointData = calculateHorizontalSlice(startHeight);
-  // drawLineByPoints(slicePointData, 'horizontalTrace', color);
-  drawPointByPoints(slicePointData, 'horizontalTrace', color);
+  drawPointByPoints(slicePointData, name, color);
+  drawLineByPoints(slicePointData, name, color);
 }
 
 /** 根据点数组绘制点图形 **/
-const drawPointByPoints = (data, name, color) => {
-  console.log(data);
+const drawPointByPoints = (data, groupName, color) => {
   const geometry = new Three.Geometry();//声明一个空几何体对象
   data.forEach(item => {
     geometry.vertices.push(new Three.Vector3(item.x, item.y, item.z)); //顶点坐标添加到geometry对象
@@ -460,31 +454,29 @@ const drawPointByPoints = (data, name, color) => {
     size: 8
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
-  points.name = name;
-  scene.add(points);//点对象添加到场景中
+  findObjectByName(groupName).add(points);
   render();
 }
 
 /** 根据点数组绘制包围轨迹图形 **/
-// const drawLineByPoints = (data, name, color) => {
-//   const curve = new Three.CatmullRomCurve3(
-//     data.map(item => {
-//       return new Three.Vector3(item.x, item.y, item.z)
-//     })
-//   );
-//   const points = curve.getPoints(50);
-//   const geometry = new Three.BufferGeometry().setFromPoints(points);
-//   const material = new Three.LineBasicMaterial({
-//     color: color,
-//     linewidth: 100,
-//     linecap: 'round',
-//     linejoin:  'round',
-//   });
-//   // Create the final object to add to the scene
-//   const curveObject = new Three.Line(geometry, material);
-//   curveObject.name = name;
-//   scene.add(curveObject);
-// }
+const drawLineByPoints = (data, name, color) => {
+  // 将坐标点逆时针排序
+  data.sort((a, b) => {
+    return Math.atan2(a.x, a.y) - Math.atan2(b.x, b.y);
+  })
+  const listPoints = data.map(item => {
+    return new Three.Vector3(item.x, item.y, item.z)
+  });
+  listPoints.push(data[0]);
+  const geometry = new Three.BufferGeometry().setFromPoints(listPoints);
+  const material = new Three.MeshBasicMaterial({
+    color: color,
+    side: Three.DoubleSide,
+  });
+  // Create the final object to add to the scene
+  const lineObject = new Three.Line(geometry, material);
+  findObjectByName(name).add(lineObject);
+}
 
 /** 绘制椎体所需参数
  * radiusTop: 上底半径
@@ -624,9 +616,9 @@ const calculateHorizontalSlice = (zHeight) => {
       hasCalLine.push(key1);
       const arrayToObject = (pointArray) => {
         return {
-          x: pointArray[0],
-          y: pointArray[1],
-          z: pointArray[2],
+          x: Math.formatFloat(pointArray[0], 5),
+          y: Math.formatFloat(pointArray[1], 5),
+          z: Math.formatFloat(pointArray[2], 5),
         }
       }
       const p1z = Math.formatFloat(p1[2], 5);
@@ -642,8 +634,8 @@ const calculateHorizontalSlice = (zHeight) => {
       } else {
         const k = (zHeight - p1[2]) / (zHeight - p2[2]);
         let res = new Array(3);
-        res[0] = Math.formatFloat((p1[0] - k * p2[0]) / (1 - k), 5);
-        res[1] = Math.formatFloat((p1[1] - k * p2[1]) / (1 - k), 5);
+        res[0] = (p1[0] - k * p2[0]) / (1 - k);
+        res[1] = (p1[1] - k * p2[1]) / (1 - k);
         res[2] = zHeight;
         return [arrayToObject(res)];
       }
