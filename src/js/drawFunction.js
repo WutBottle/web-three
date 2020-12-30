@@ -443,8 +443,8 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
   const createSliceLayer = (data) => {
     data.forEach(item => {
       const slicePointData = calculateHorizontalSlice(item);
-      drawPointByPoints(slicePointData, name, color);
-      drawLineByPoints(slicePointData, name, color);
+      slicePointData.length && drawPointByPoints(slicePointData, name, color);
+      slicePointData.length && drawLineByPoints(slicePointData, name, color);
     })
   }
   createSliceLayer(layersData);
@@ -458,7 +458,7 @@ const drawPointByPoints = (data, groupName, color) => {
   })
   const material = new Three.PointsMaterial({
     color: color,
-    size: 8
+    size: 4
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
   findObjectByName(groupName).add(points);
@@ -612,42 +612,35 @@ Math.formatFloat = (f, digit) => {
 /** 计算水平切片轨迹 **/
 const calculateHorizontalSlice = (zHeight) => {
   let resultData = [];
-  let hasCalLine = [];
   // 每三个点为一个单元计算
   const unitCal = (p1, p2) => {
-    const key1 = JSON.stringify(p1) + JSON.stringify(p2);
-    const key2 = JSON.stringify(p2) + JSON.stringify(p1);
-    if (hasCalLine.includes(key1) || hasCalLine.includes(key2)) {
-      return [];
-    } else {
-      hasCalLine.push(key1);
-      const arrayToObject = (pointArray) => {
-        return {
-          x: Math.formatFloat(pointArray[0], 5),
-          y: Math.formatFloat(pointArray[1], 5),
-          z: Math.formatFloat(pointArray[2], 5),
-        }
-      }
-      const p1z = Math.formatFloat(p1[2], 5);
-      const p2z = Math.formatFloat(p2[2], 5);
-      if ((p1z > zHeight && p2z > zHeight) || (p1z < zHeight && p2z < zHeight)) {
-        return [];
-      } else if (p1z === zHeight && p2z === zHeight) {
-        return [arrayToObject(p1), arrayToObject(p2)];
-      } else if (p1z === zHeight && p2z !== zHeight) {
-        return [arrayToObject(p1)];
-      } else if (p1z !== zHeight && p2z === zHeight) {
-        return [arrayToObject(p2)];
-      } else {
-        const k = (zHeight - p1[2]) / (zHeight - p2[2]);
-        let res = new Array(3);
-        res[0] = (p1[0] - k * p2[0]) / (1 - k);
-        res[1] = (p1[1] - k * p2[1]) / (1 - k);
-        res[2] = zHeight;
-        return [arrayToObject(res)];
+    const arrayToObject = (pointArray) => {
+      return {
+        x: Math.formatFloat(pointArray[0], 5),
+        y: Math.formatFloat(pointArray[1], 5),
+        z: Math.formatFloat(pointArray[2], 5),
       }
     }
+    const p1z = Math.formatFloat(p1[2], 5);
+    const p2z = Math.formatFloat(p2[2], 5);
+    if ((p1z > zHeight && p2z > zHeight) || (p1z < zHeight && p2z < zHeight)) {
+      return [];
+    } else if (p1z === zHeight && p2z === zHeight) {
+      return [arrayToObject(p1), arrayToObject(p2)];
+    } else if (p1z === zHeight && p2z !== zHeight) {
+      return [arrayToObject(p1)];
+    } else if (p1z !== zHeight && p2z === zHeight) {
+      return [arrayToObject(p2)];
+    } else {
+      const k = (zHeight - p1[2]) / (zHeight - p2[2]);
+      let res = new Array(3);
+      res[0] = (p1[0] - k * p2[0]) / (1 - k);
+      res[1] = (p1[1] - k * p2[1]) / (1 - k);
+      res[2] = zHeight;
+      return [arrayToObject(res)];
+    }
   }
+
   for (let i = 0; i < currentBuffGeometryPoint.length; i += 9) {
     resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i, i + 3), currentBuffGeometryPoint.slice(i + 3, i + 6)));
     resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i + 3, i + 6), currentBuffGeometryPoint.slice(i + 6, i + 9)));
