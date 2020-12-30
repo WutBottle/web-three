@@ -458,7 +458,7 @@ const drawPointByPoints = (data, groupName, color) => {
   })
   const material = new Three.PointsMaterial({
     color: color,
-    size: 4
+    size: 6
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
   findObjectByName(groupName).add(points);
