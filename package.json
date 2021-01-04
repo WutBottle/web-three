@@ -20,7 +20,6 @@
     "threejs-export-stl": "^0.0.4",
     "vcolorpicker": "^1.0.3",
     "vue": "^2.6.11",
-    "vue-axios": "^3.2.0",
     "vue-router": "^3.4.9"
   },
   "devDependencies": {
