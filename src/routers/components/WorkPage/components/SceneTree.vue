@@ -39,11 +39,10 @@ export default {
     },
     // 处理复选框变化
     checkedKeys(val) {
-      this.checkedKeys = val;
       this.allCheckedData.forEach(item => {
-        if(item.fatherNode || val.includes(item.name)) {
-          showHide(item.name, true);
-        }else {
+        // 此处写法解决tree val第一次更改后自动回退到前一步数据问题，原因暂时未知
+        showHide(item.name, true);
+        if(!(item.fatherNode || val.includes(item.name))) {
           showHide(item.name, false);
         }
       })
