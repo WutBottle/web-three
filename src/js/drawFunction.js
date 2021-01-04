@@ -29,6 +29,7 @@ export const statsInit = () => {
   stats.dom.style.left = 'auto';
   stats.dom.style.right = '0';
   stats.dom.style.top = '30px';
+  stats.dom.style.zIndex = 100;
 
   function animate() {
     stats.begin();
@@ -43,7 +44,7 @@ export const statsInit = () => {
 
 /** 获取场景对象scene **/
 export const getScene = () => {
-  return scene;
+  return scene.clone(); // 使用内置clone拷贝对象暴露出去
 }
 
 /** 移除场景中物体 **/
@@ -352,10 +353,10 @@ export const findObjectByName = (name) => {
 /** 控制group显示或隐藏
  * name: Group的name
  * **/
-export const showHide = (name) => {
+export const showHide = (name, val) => {
   const status = findObjectByName(name);
   if (status) {
-    status.visible = !status.visible;
+    status.visible = val === undefined ? !status.visible : val;
     render();
   }
 }
@@ -430,21 +431,22 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
       transparent: true,
     })
     const mesh = new Three.Mesh(plane, material)
+    mesh.position.x = 0;
+    mesh.position.y = 0;
+    mesh.position.z = startHeight + i * thick;
     let group = new Three.Group();
     group.add(mesh)
     group.name = name + i;
-    group.position.x = 0;
-    group.position.y = 0;
-    group.position.z = startHeight + i * thick;
     groupArray.add(group);
     layersData.push(startHeight + i * thick);
   }
   scene.add(groupArray);
   const createSliceLayer = (data) => {
-    data.forEach(item => {
+    data.forEach((item, index) => {
+      const groupName = name + index.toString();
       const slicePointData = calculateHorizontalSlice(item);
-      slicePointData.length && drawPointByPoints(slicePointData, name, color);
-      slicePointData.length && drawLineByPoints(slicePointData, name, color);
+      slicePointData.length && drawPointByPoints(slicePointData, groupName, color);
+      slicePointData.length && drawLineByPoints(slicePointData, groupName, color);
     })
   }
   createSliceLayer(layersData);
@@ -483,6 +485,7 @@ const drawLineByPoints = (data, name, color) => {
   // Create the final object to add to the scene
   const lineObject = new Three.Line(geometry, material);
   findObjectByName(name).add(lineObject);
+  render();
 }
 
 /** 绘制椎体所需参数

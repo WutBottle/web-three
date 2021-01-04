@@ -31,6 +31,7 @@ import {
   Empty,
   PageHeader,
   Dropdown,
+  Drawer,
 } from 'ant-design-vue'
 import vcolorpicker from 'vcolorpicker'
 import routers from './routers'
@@ -66,6 +67,7 @@ Vue.use(Switch);
 Vue.use(Empty);
 Vue.use(PageHeader);
 Vue.use(Dropdown);
+Vue.use(Drawer);
 
 Vue.prototype.$message = message;
 Vue.prototype.$confirm = Modal.confirm;

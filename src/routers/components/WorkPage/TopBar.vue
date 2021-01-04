@@ -50,7 +50,7 @@
               <a-icon type="save"/>
               <span>另存为</span>
             </span>
-            <a-menu-item key="stl" @click="() => this.setNameVisible = true">
+            <a-menu-item key="stl" @click="handleExportSTL">
               .STL
             </a-menu-item>
           </a-sub-menu>
@@ -63,7 +63,7 @@
       </a-dropdown>
       <button>编辑</button>
       <button>图像</button>
-      <button>图层</button>
+      <button @click="showComponentsDrawer">图层</button>
       <a-dropdown :trigger="['click']">
         <a class="ant-dropdown-link" @click="e => e.preventDefault()">
           <button>功能</button>
@@ -160,11 +160,21 @@
         </a-tab-pane>
       </a-tabs>
     </a-modal>
+    <a-drawer
+      title="图层"
+      placement="right"
+      :visible="componentsVisible"
+      :mask="false"
+      @close="() => this.componentsVisible = false"
+    >
+      <SceneTree :data="treeData"/>
+    </a-drawer>
   </div>
 </template>
 
 <script>
 import {saveAsSTL} from '@js/fileSave';
+import SceneTree from './components/SceneTree'
 import {
   findObjectByName,
   makeCone,
@@ -172,11 +182,15 @@ import {
   removeObject,
   removeAll,
   render,
+  getScene
   // animationDrawLine
 } from '@js/drawFunction';
 
 export default {
   name: "TopBar",
+  components: {
+    SceneTree
+  },
   data() {
     return {
       setNameVisible: false, // 导出文件名字弹窗控制
@@ -199,6 +213,8 @@ export default {
         thick: 20, // 厚度
       }, // 水平切片
       color: '#ff0000', // 选择颜色
+      componentsVisible: false, // 图层抽屉显示
+      treeData: [], // 图层数据
     }
   },
   // 页面后退后清除数据
@@ -238,6 +254,7 @@ export default {
           makeHorizontalSlice('horizontalSlice', this.horizontalSliceParameter);
           render();
           this.sliceFormVisible = false;
+          this.treeData = getScene().children;
         }
       })
       // 椎体切片
@@ -266,6 +283,15 @@ export default {
     playAnimation() {
       this.$message.info('该功能正在开发中...')
       // animationDrawLine();
+    },
+    // 点击导出stl文件相关处理
+    handleExportSTL() {
+
+    },
+    // 显示图层树形菜单
+    showComponentsDrawer() {
+      this.componentsVisible = !this.componentsVisible;
+      this.componentsVisible && (this.treeData = getScene().children); // 如果为真更新数据
     }
   }
 }
