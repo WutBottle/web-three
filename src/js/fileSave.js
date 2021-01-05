@@ -1,9 +1,15 @@
-const exportSTL = require('threejs-export-stl');
 const {saveAs} = require('file-saver');
+const Three = require('three');
+const {findObjectByName} = require('./drawFunction');
+const {STLExporter} = require('three/examples/jsm/exporters/STLExporter');
 
-const saveAsSTL = (geometry, fileName) => {
-  const buffer = exportSTL.fromGeometry(geometry);
-  const blob = new Blob([buffer], { type: exportSTL.mimeType });
+const saveAsSTL = (nameArray, fileName) => {
+  const scene = new Three.Scene();
+  nameArray.forEach(item => {
+    scene.add(findObjectByName(item).clone());
+  })
+  const exporter = new STLExporter();
+  const blob = new Blob([exporter.parse(scene)], {type: 'text/plain'});
   saveAs(blob, fileName + '.stl');
 }
 

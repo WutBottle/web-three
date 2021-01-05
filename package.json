@@ -17,7 +17,6 @@
     "normalize.css": "^8.0.1",
     "stats.js": "^0.17.0",
     "three": "^0.120.1",
-    "threejs-export-stl": "^0.0.4",
     "vcolorpicker": "^1.0.3",
     "vue": "^2.6.11",
     "vue-router": "^3.4.9"
@@ -29,7 +28,7 @@
     "babel-eslint": "^10.1.0",
     "babel-plugin-import": "^1.13.0",
     "c-cpp-modules-webpack-loader": "^0.9.9",
-    "eslint": "^6.7.2",
+    "eslint": "^6.8.0",
     "eslint-plugin-vue": "^6.2.2",
     "less": "^3.12.2",
     "less-loader": "^7.0.1",
