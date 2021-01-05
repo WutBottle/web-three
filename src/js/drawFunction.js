@@ -143,7 +143,7 @@ export const drawGrid = (len = 800) => {
     let line2 = new Three.Line(geometry, new Three.LineBasicMaterial({color: 0xffffdd, opacity: 0.1}));
     line2.position.x = (i * unitLen) - len;
     line2.rotation.y = 90 * Math.PI / 180;   //转90度
-    gridGroup.name = 'bottomGrid';
+    gridGroup.name = '底部网格';
     gridGroup.add(line1, line2);
   }
   scene.add(gridGroup);
@@ -154,7 +154,7 @@ export const drawGrid = (len = 800) => {
  * **/
 export const drawAxis = (size = 800) => {
   axisGroup = new Three.Group();
-  axisGroup.name = 'centerAxis';
+  axisGroup.name = '坐标轴';
   //来自原点的方向。必须是单位向量
   const dirX = new Three.Vector3(size, 0, 0);
   const dirY = new Three.Vector3(0, size, 0);
@@ -179,7 +179,6 @@ export const drawAxis = (size = 800) => {
   let arrowHelperY = new Three.ArrowHelper(dirY, origin, length, hexY, headLength, headWidth);
   let arrowHelperZ = new Three.ArrowHelper(dirZ, origin, length, hexZ, headLength, headWidth);
   axisGroup.add(arrowHelperX, arrowHelperY, arrowHelperZ);
-  axisGroup.name = 'centerAxis';
   scene.add(axisGroup);
 }
 
@@ -253,7 +252,7 @@ export const createSurroundBox = (data) => {
   ballMesh.position.z = (data.min.z + data.max.z) / 2;
   let helper = new Three.Box3Helper(data, 0xffff00);
   let group = new Three.Group();
-  group.name = 'surroundBox';
+  group.name = '包络盒';
   group.visible = false;
   group.add(helper, ballMesh);
   scene.add(group);
@@ -262,7 +261,7 @@ export const createSurroundBox = (data) => {
     borderColor: {r: 0, g: 0, b: 0, a: 1},
     backgroundColor: {r: 0, g: 0, b: 0, a: 1},
     position: {x: 10, y: -5, z: 0}
-  }, 'surroundBox')
+  }, '包络盒')
 }
 
 /** 计算geometry合适视野
@@ -295,7 +294,7 @@ export const drawSTL = (geometry, name) => {
   let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
   mesh.name = name;
   let group = new Three.Group();
-  group.name = 'targetGroup';
+  group.name = '目标模型';
   group.add(mesh)
   scene.add(group); //网格模型添加到场景中
   drawGrid(initialSight);

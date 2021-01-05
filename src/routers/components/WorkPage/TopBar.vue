@@ -50,7 +50,7 @@
               <a-icon type="save"/>
               <span>另存为</span>
             </span>
-            <a-menu-item key="stl" @click="handleExportSTL">
+            <a-menu-item key="stl" @click="() => this.setNameVisible = true">
               .STL
             </a-menu-item>
           </a-sub-menu>
@@ -80,11 +80,12 @@
     </span>
     <a-modal
       title="导出文件名称"
-      :visible="setNameVisible"
+      v-model="setNameVisible"
       okText="导出"
       cancelText="取消"
       @ok="handleSaveSTL"
     >
+
       <a-input v-model="saveName" placeholder="请输入文件名"/>
     </a-modal>
     <a-modal v-model="sliceFormVisible" title="切片" @ok="handleSliceOk" cancelText="取消" okText="确认"
@@ -251,7 +252,7 @@ export default {
             color: this.color,
           })
           removeObject('horizontalSlice'); // 移除切片
-          makeHorizontalSlice('horizontalSlice', this.horizontalSliceParameter);
+          makeHorizontalSlice('水平切片', this.horizontalSliceParameter);
           render();
           this.sliceFormVisible = false;
           this.treeData = getScene().children;
@@ -283,10 +284,6 @@ export default {
     playAnimation() {
       this.$message.info('该功能正在开发中...')
       // animationDrawLine();
-    },
-    // 点击导出stl文件相关处理
-    handleExportSTL() {
-
     },
     // 显示图层树形菜单
     showComponentsDrawer() {
