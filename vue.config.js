@@ -21,6 +21,7 @@ module.exports = {
         'vue-router': 'VueRouter',
         'axios': 'axios',
         'ant-design-vue': 'Antd',
+        'vuex': 'Vuex',
       }
       config.externals(externals)
       const cdn = {
@@ -37,8 +38,8 @@ module.exports = {
           'https://cdn.bootcdn.net/ajax/libs/axios/0.21.0/axios.min.js',
           // ant-design-vue
           'https://cdn.bootcdn.net/ajax/libs/ant-design-vue/1.6.5/antd.min.js',
-          // three.js
-          // 'https://cdn.bootcdn.net/ajax/libs/three.js/r121/three.min.js',
+          // vuex
+          'https://cdn.bootcdn.net/ajax/libs/vuex/3.5.1/vuex.min.js',
         ]
       }
       config.plugin('html').tap(args => {
@@ -54,7 +55,8 @@ module.exports = {
       .set('@routers', resolve('src/routers'))
       .set('@js', resolve('src/js'))
       .set('@data', resolve('src/data'))
-      .set('@C_CPP', resolve('src/C_CPP'));
+      .set('@C_CPP', resolve('src/C_CPP'))
+      .set('@store', resolve('src/store'));
   },
   configureWebpack: (config) => {
     config.module.rules.push({

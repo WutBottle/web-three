@@ -16,6 +16,8 @@
 </template>
 
 <script>
+import {mapMutations} from 'vuex';
+import _ from 'lodash';
 import * as Three from 'three';
 import {
   showHide
@@ -42,10 +44,26 @@ export default {
       this.allCheckedData.forEach(item => {
         // 此处写法解决tree val第一次更改后自动回退到前一步数据问题，原因暂时未知
         showHide(item.name, true);
-        if(!(item.fatherNode || val.includes(item.name))) {
+        if (!(item.fatherNode || val.includes(item.name))) {
           showHide(item.name, false);
         }
       })
+      // 过滤数据，比如子图层全选会有父图层节点重复加入，原因是antd这个checkedKeys数据结构暴露出来的参数是扁平化的结构
+      const filterData = (data) => {
+        // 首先逆序排序，比如相同的会是：水平切片3、水平切片2、水平切片1、水平切片0、水平切片
+        data.sort((a, b) => {
+          return b.localeCompare(a);
+        });
+        // 组装需要导出的索引名称，先判断前面数据是否包含子节点，因为排序后父节点注定会在子节点后面，最后通过切分字符串返回数组
+        return data.reduce((pre, cur) => {
+          if(pre.includes(cur)) {
+            return pre;
+          }else {
+            return pre + '-' + cur;
+          }
+        }).split('-');
+      }
+      this.updateIndexData(filterData(_.cloneDeep(this.checkedKeys)));
     },
   },
   data() {
@@ -60,6 +78,9 @@ export default {
     this.createTree();
   },
   methods: {
+    ...mapMutations({
+      updateIndexData: 'commonData/updateIndexData',
+    }),
     createTree() {
       this.treeData = []; // 初始化树形数据
       this.checkedKeys = []; // 初始化绑定显隐数组
@@ -78,7 +99,7 @@ export default {
             const judgeFatherNode = (data) => {
               let result = false;
               data.forEach(item => {
-                if(item instanceof Three.Group) {
+                if (item instanceof Three.Group) {
                   result = true;
                 }
               })

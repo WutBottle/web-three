@@ -174,8 +174,9 @@
 </template>
 
 <script>
+import {mapState} from 'vuex';
 import {saveAsSTL} from '@js/fileSave';
-import SceneTree from './components/SceneTree'
+import SceneTree from './components/SceneTree';
 import {
   makeCone,
   makeHorizontalSlice,
@@ -190,6 +191,11 @@ export default {
   name: "TopBar",
   components: {
     SceneTree
+  },
+  computed: {
+    ...mapState({
+      indexData: state => state.commonData.indexData,
+    }),
   },
   data() {
     return {
@@ -225,7 +231,7 @@ export default {
     // 处理导出stl文件
     handleSave() {
       if (this.saveName) {
-        saveAsSTL(['目标模型', '底部网格', '坐标轴', '水平切片', '包络盒'], this.saveName);
+        saveAsSTL(this.indexData, this.saveName);
         this.setNameVisible = false;
         this.saveName = '';
         this.$message.success('导出成功');
