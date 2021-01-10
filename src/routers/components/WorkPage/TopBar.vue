@@ -264,7 +264,6 @@ export default {
           render();
           this.sliceFormVisible = false;
           this.flatForm.resetFields();
-          this.flatForm.resetFields();
           this.treeData = getScene().children;
         }
       })
