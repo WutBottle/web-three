@@ -174,7 +174,7 @@
 </template>
 
 <script>
-import {mapState} from 'vuex';
+import {mapState, mapMutations} from 'vuex';
 import {saveAsSTL} from '@js/fileSave';
 import SceneTree from './components/SceneTree';
 import {
@@ -228,6 +228,9 @@ export default {
     removeAll();
   },
   methods: {
+    ...mapMutations({
+      deleteTreeDataItem: 'commonData/deleteTreeDataItem',
+    }),
     // 处理导出stl文件
     handleSave() {
       if (this.saveName) {
@@ -256,7 +259,8 @@ export default {
             thick: Number(values.sliceThick),
             color: this.color,
           })
-          removeObject('horizontalSlice'); // 移除切片
+          removeObject('水平切片'); // 移除切片
+          this.deleteTreeDataItem('水平切片'); // 删除图层树形数据
           makeHorizontalSlice('水平切片', this.horizontalSliceParameter);
           render();
           this.sliceFormVisible = false;

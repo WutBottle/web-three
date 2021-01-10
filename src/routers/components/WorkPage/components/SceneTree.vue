@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import {mapMutations} from 'vuex';
+import {mapState, mapMutations} from 'vuex';
 import _ from 'lodash';
 import * as Three from 'three';
 import {
@@ -66,9 +66,13 @@ export default {
       this.updateIndexData(filterData(_.cloneDeep(this.checkedKeys)));
     },
   },
+  computed: {
+    ...mapState({
+      treeData: state => state.commonData.treeData,
+    })
+  },
   data() {
     return {
-      treeData: [],
       checkedKeys: [],
       allCheckedData: [],
     }
@@ -80,9 +84,10 @@ export default {
   methods: {
     ...mapMutations({
       updateIndexData: 'commonData/updateIndexData',
+      iniTreeData: 'commonData/iniTreeData',
     }),
     createTree() {
-      this.treeData = []; // 初始化树形数据
+      this.iniTreeData();
       this.checkedKeys = []; // 初始化绑定显隐数组
       this.allCheckedData = []; // 初始化树形显隐控制数组
       this.traverseScene(this.data, this.treeData); // 遍历scene进行控制
