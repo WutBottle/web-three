@@ -8,9 +8,10 @@ const state = {
 };
 
 const mutations = {
+  // 更新当前图层索引数据
   updateIndexData(state, data) {
     state.indexData = data;
-  }
+  },
 };
 
 const actions = {};

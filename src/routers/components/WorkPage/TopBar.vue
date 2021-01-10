@@ -256,10 +256,11 @@ export default {
             thick: Number(values.sliceThick),
             color: this.color,
           })
-          removeObject('horizontalSlice'); // 移除切片
+          removeObject('水平切片'); // 移除切片
           makeHorizontalSlice('水平切片', this.horizontalSliceParameter);
           render();
           this.sliceFormVisible = false;
+          this.flatForm.resetFields();
           this.treeData = getScene().children;
         }
       })

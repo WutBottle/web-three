@@ -56,9 +56,9 @@ export default {
         });
         // 组装需要导出的索引名称，先判断前面数据是否包含子节点，因为排序后父节点注定会在子节点后面，最后通过切分字符串返回数组
         return data.reduce((pre, cur) => {
-          if(pre.includes(cur)) {
+          if (pre.includes(cur)) {
             return pre;
-          }else {
+          } else {
             return pre + '-' + cur;
           }
         }).split('-');
@@ -82,7 +82,7 @@ export default {
       updateIndexData: 'commonData/updateIndexData',
     }),
     createTree() {
-      this.treeData = []; // 初始化树形数据
+      this.treeData = [];
       this.checkedKeys = []; // 初始化绑定显隐数组
       this.allCheckedData = []; // 初始化树形显隐控制数组
       this.traverseScene(this.data, this.treeData); // 遍历scene进行控制
