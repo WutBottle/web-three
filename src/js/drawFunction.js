@@ -289,13 +289,12 @@ export const drawSTL = (geometry, name) => {
   let material = new Three.MeshLambertMaterial({
     color: 0x29d6d6,
     side: Three.DoubleSide,
-    wireframe: true,
   }); //材质对象Material
   let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
   mesh.name = name;
   let group = new Three.Group();
   group.name = '目标模型';
-  group.add(mesh)
+  group.add(mesh);
   scene.add(group); //网格模型添加到场景中
   drawGrid(initialSight);
   drawAxis(initialSight);
@@ -418,8 +417,8 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
   let groupArray = new Three.Group();
   groupArray.name = name;
   const layersNum = Math.floor((endHeight - startHeight) / thick);
-  const planeWidth = Math.abs(boundingBox.max.x - boundingBox.min.x);
-  const planeHeight = Math.abs(boundingBox.max.y - boundingBox.min.y);
+  const planeWidth = Math.abs(boundingBox.max.x - boundingBox.min.x) * 1.5;
+  const planeHeight = Math.abs(boundingBox.max.y - boundingBox.min.y) * 1.5;
   let layersData = [];
   for (let i = 0; i < layersNum; i++) {
     const plane = new Three.PlaneGeometry(planeWidth, planeHeight)
@@ -430,8 +429,8 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
       transparent: true,
     })
     const mesh = new Three.Mesh(plane, material)
-    mesh.position.x = 0;
-    mesh.position.y = 0;
+    mesh.position.x = (boundingBox.max.x + boundingBox.min.x) / 2;
+    mesh.position.y = (boundingBox.max.y + boundingBox.min.y) / 2;
     mesh.position.z = startHeight + i * thick;
     let group = new Three.Group();
     group.add(mesh)
@@ -445,7 +444,7 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
       const groupName = name + index.toString();
       const slicePointData = calculateHorizontalSlice(item);
       slicePointData.length && drawPointByPoints(slicePointData, groupName, color);
-      slicePointData.length && drawLineByPoints(slicePointData, groupName, color);
+      // slicePointData.length && drawLineByPoints(slicePointData, groupName, color);
     })
   }
   createSliceLayer(layersData);
@@ -467,6 +466,7 @@ const drawPointByPoints = (data, groupName, color) => {
 }
 
 /** 根据点数组绘制包围轨迹图形 **/
+// eslint-disable-next-line no-unused-vars
 const drawLineByPoints = (data, name, color) => {
   // 将坐标点逆时针排序
   data.sort((a, b) => {
