@@ -32,19 +32,17 @@ export default {
     }
   },
   watch: {
-    data: {
-      handler(val) {
-        this.data = val;
-        this.createTree();
-      },
-      deep: true //true 深度监听
+    // 图层数据变化后重新绘制图层节点树
+    data(val) {
+      this.data = val;
+      this.createTree();
     },
     // 处理复选框变化
     checkedKeys(val) {
       this.allCheckedData.forEach(item => {
-        // 此处写法解决tree val第一次更改后自动回退到前一步数据问题，原因暂时未知
-        showHide(item.name, true);
-        if (!(item.fatherNode || val.includes(item.name))) {
+        if (item.fatherNode || val.includes(item.name)) {
+          showHide(item.name, true);
+        } else {
           showHide(item.name, false);
         }
       })
@@ -93,18 +91,19 @@ export default {
         if (source[key] instanceof Three.Group) {
           const currentName = source[key].name;
           const currentKey = source[key].name;
-          source[key].visible && this.checkedKeys.push(currentName); // 当visible为可见时才可进入数组
+          const judgeFatherNode = (data) => {
+            let result = false;
+            data.forEach(item => {
+              if (item instanceof Three.Group) {
+                result = true;
+              }
+            })
+            return result;
+          }
+          // 首先判断是否为父节点，其次判断是否为可见，当不为父节点且可见则将当前选中图层加入数组
+          !judgeFatherNode(source[key].children) && source[key].visible && this.checkedKeys.push(currentName); // 当visible为可见时才可进入数组
           if (source[key].children.length) {
             // 只有子数据含有Group类型数组才为父节点否则都是最子节点
-            const judgeFatherNode = (data) => {
-              let result = false;
-              data.forEach(item => {
-                if (item instanceof Three.Group) {
-                  result = true;
-                }
-              })
-              return result;
-            }
             this.allCheckedData.push({
               name: currentName,
               fatherNode: judgeFatherNode(source[key].children)

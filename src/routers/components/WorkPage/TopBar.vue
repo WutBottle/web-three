@@ -85,7 +85,7 @@
       cancelText="取消"
       @ok="handleSave"
     >
-      <a-alert message="该操作将当前选中图层导出为.stl格式文件" style="margin-bottom: 20px" banner />
+      <a-alert message="该操作将当前选中图层导出为.stl格式文件" style="margin-bottom: 20px" banner/>
       <a-input v-model="saveName" placeholder="请输入文件名"/>
     </a-modal>
     <a-modal v-model="sliceFormVisible" title="切片" @ok="handleSliceOk" cancelText="取消" okText="确认"

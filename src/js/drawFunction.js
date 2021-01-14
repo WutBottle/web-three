@@ -56,13 +56,13 @@ export const removeObject = (name) => {
 export const initialLight = () => {
   let directionalLightLeft = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
   directionalLightLeft.position.set(0, 0, 1000);
-  let ambient; // 环境光
   scene.add(directionalLightLeft); // 点光源添加到场景中
   let directionalLightRight = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
   directionalLightRight.position.set(0, 0, -1000);
   scene.add(directionalLightRight); // 点光源添加到场景中
-  ambient = new Three.AmbientLight(0xffffff);
-  scene.add(ambient); // 环境光添加到场景中
+  // let ambient; // 环境光
+  // ambient = new Three.AmbientLight(0xffffff);
+  // scene.add(ambient); // 环境光添加到场景中
 }
 
 /** 初始化Camera **/
@@ -252,9 +252,9 @@ export const createSurroundBox = (data) => {
   ballMesh.position.z = (data.min.z + data.max.z) / 2;
   let helper = new Three.Box3Helper(data, 0xffff00);
   let group = new Three.Group();
+  group.add(helper, ballMesh);
   group.name = '包络盒';
   group.visible = false;
-  group.add(helper, ballMesh);
   scene.add(group);
   drawText('这是包络盒', {
     fontsize: 30,
@@ -287,7 +287,7 @@ export const drawSTL = (geometry, name) => {
   createSurroundBox(boundingBox);
   initialSight = computeSight(boundingBox);
   let material = new Three.MeshLambertMaterial({
-    color: 0x29d6d6,
+    color: 0x36d5d5,
     side: Three.DoubleSide,
   }); //材质对象Material
   let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
