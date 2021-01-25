@@ -19,6 +19,7 @@ let initialSight = null; // 初始化模型视野
 
 let testAnimationData = []; // 动画轨迹测试数据
 let currentBuffGeometryPoint = []; // 当前模型点云数据
+let currentGeometryPoint = []; // 当前模型三角面片数据
 
 /** 添加帧数监听 **/
 export const statsInit = () => {
@@ -60,9 +61,9 @@ export const initialLight = () => {
   let directionalLightRight = new Three.DirectionalLight(0xffffff); // 光源设置 点光源
   directionalLightRight.position.set(0, 0, -1000);
   scene.add(directionalLightRight); // 点光源添加到场景中
-  // let ambient; // 环境光
-  // ambient = new Three.AmbientLight(0xffffff);
-  // scene.add(ambient); // 环境光添加到场景中
+  let ambient; // 环境光
+  ambient = new Three.AmbientLight(0xffffff);
+  scene.add(ambient); // 环境光添加到场景中
 }
 
 /** 初始化Camera **/
@@ -74,7 +75,7 @@ export const initialCamera = () => {
   camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
 }
 
-/** 初始化BG **/
+/** 初始化Background **/
 export const initialBG = () => {
   renderer.setSize(width, height);//设置渲染区域尺寸
   renderer.setClearColor(0x333333, 1); //设置背景颜色
@@ -282,6 +283,7 @@ export const computeSight = (data) => {
 export const drawSTL = (geometry, name) => {
   // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
   geometry.computeBoundingBox();
+  currentGeometryPoint = new Three.Geometry().fromBufferGeometry(geometry).clone();
   currentBuffGeometryPoint = geometry.attributes.position.array;
   boundingBox = geometry.boundingBox;
   createSurroundBox(boundingBox);
@@ -289,6 +291,7 @@ export const drawSTL = (geometry, name) => {
   let material = new Three.MeshLambertMaterial({
     color: 0x36d5d5,
     side: Three.DoubleSide,
+    wireframe: true,
   }); //材质对象Material
   let mesh = new Three.Mesh(geometry, material); //网格模型对象Mesh
   mesh.name = name;
@@ -299,6 +302,7 @@ export const drawSTL = (geometry, name) => {
   drawGrid(initialSight);
   drawAxis(initialSight);
   resetModel();
+  iniModelTopological();
 }
 
 /** 处理页面缩放 **/
@@ -657,4 +661,45 @@ const calculateHorizontalSlice = (zHeight) => {
     }, []);
   }
   return unique(resultData);
+}
+
+/** 判断Vertices数据是否相等 **/
+function compareVertices(V1, V2) {
+  return JSON.stringify(V1) === JSON.stringify(V2);
+}
+
+/** 初始化模型三角面片几何拓扑关系 **/
+function iniModelTopological() {
+  let Faces = currentGeometryPoint.faces;
+  let Vertices = currentGeometryPoint.vertices;
+  // 寻找临接三角面片
+  const findNeighborIndex = (currentIndex, line) => {
+    // 寻找临接Face,如果三角面片包含该线段则返回true，否则返回false
+    const lineInFace = (face, line) => {
+      let index = 0;
+      line.map(item => {
+        if (compareVertices(Vertices[face.a], item) || compareVertices(Vertices[face.b], item) || compareVertices(Vertices[face.c], item)) {
+          index++;
+        }
+      })
+      return index === 2;
+    }
+    // 遍历三角面片如果含有该线段的非当前三角面片则为临接面片，并且返回索引值
+    for (let i = 0; i < Faces.length; i++) {
+      if (i !== currentIndex && lineInFace(Faces[i], line)) {
+        return i;
+      }
+    }
+    return false;
+  }
+  // 求临接三角面片并存入Faces中
+  Faces.map((item, index) => {
+    let line0 = [Vertices[item.a], Vertices[item.b]];
+    let line1 = [Vertices[item.b], Vertices[item.c]];
+    let line2 = [Vertices[item.c], Vertices[item.a]];
+    Object.assign(Faces[index], {
+      neighborIndex: [findNeighborIndex(index, line0), findNeighborIndex(index, line1), findNeighborIndex(index, line2)]
+    })
+  })
+  console.log(Faces);
 }
