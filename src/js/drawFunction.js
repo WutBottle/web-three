@@ -302,7 +302,9 @@ export const drawSTL = (geometry, name) => {
   drawGrid(initialSight);
   drawAxis(initialSight);
   resetModel();
+  console.time('time');
   iniModelTopological();
+  console.timeEnd('time');
 }
 
 /** 处理页面缩放 **/
@@ -665,7 +667,7 @@ const calculateHorizontalSlice = (zHeight) => {
 
 /** 判断Vertices数据是否相等 **/
 function compareVertices(V1, V2) {
-  return JSON.stringify(V1) === JSON.stringify(V2);
+  return V1.x === V2.x && V1.y === V2.y && V1.z === V1.z;
 }
 
 /** 初始化模型三角面片几何拓扑关系 **/
@@ -685,12 +687,7 @@ function iniModelTopological() {
       return index === 2;
     }
     // 遍历三角面片如果含有该线段的非当前三角面片则为临接面片，并且返回索引值
-    for (let i = 0; i < Faces.length; i++) {
-      if (i !== currentIndex && lineInFace(Faces[i], line)) {
-        return i;
-      }
-    }
-    return false;
+    return Faces.findIndex((currentValue, index) => index !== currentIndex && lineInFace(currentValue, line))
   }
   // 求临接三角面片并存入Faces中
   Faces.map((item, index) => {
