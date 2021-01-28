@@ -20,5 +20,9 @@ export default new vueRouter({
     path: '/file',
     name: 'FilePage',
     component: () => import('@components/FilePage/FilePage'),
+  }, {
+    path: '/worker',
+    name: 'WorkerPage',
+    component: () => import('@components/WorkerPage/WorkerPage'),
   }]
 })

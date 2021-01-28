@@ -665,55 +665,10 @@ const calculateHorizontalSlice = (zHeight) => {
   return unique(resultData);
 }
 
-/** 判断Vertices数据是否相等 **/
-function compareVertices(V1, V2) {
-  return V1.x === V2.x && V1.y === V2.y && V1.z === V2.z;
-}
-
 /** 初始化模型三角面片几何拓扑关系 **/
 function iniModelTopological() {
   let Faces = currentGeometryPoint.faces;
   let Vertices = currentGeometryPoint.vertices;
-  // 寻找临接三角面片
-  const findNeighborIndex = (currentIndex, line) => {
-    // 寻找临接Face,如果三角面片包含该线段则返回true，否则返回false
-    const lineInFace = (face, line) => {
-      let index = 0;
-      line.map(item => {
-        if (compareVertices(Vertices[face.a], item) || compareVertices(Vertices[face.b], item) || compareVertices(Vertices[face.c], item)) {
-          index++;
-        }
-      })
-      return index === 2;
-    }
-    // 遍历三角面片如果含有该线段的非当前三角面片则为临接面片，并且返回索引值
-    return Faces.findIndex((currentValue, index) => index !== currentIndex && lineInFace(currentValue, line))
-  }
-  // 求临接三角面片并存入Faces中
-  Faces.map((item, index) => {
-    let line0 = [Vertices[item.a], Vertices[item.b]];
-    let line1 = [Vertices[item.b], Vertices[item.c]];
-    let line2 = [Vertices[item.c], Vertices[item.a]];
-    Object.assign(Faces[index], {
-      neighborIndex: [findNeighborIndex(index, line0), findNeighborIndex(index, line1), findNeighborIndex(index, line2)],
-      maxZ: Math.max(...[Vertices[item.a].z, Vertices[item.b].z, Vertices[item.c].z]),
-      minZ: Math.min(...[Vertices[item.a].z, Vertices[item.b].z, Vertices[item.c].z])
-    })
-  })
-  console.log(Faces)
-  // 生成轮廓交点
-  // const sequentialPoints = (zIndex, newFaces, Vertices) => {
-  //   if (currentGeometryPoint.boundingBox.min.z <= zIndex && zIndex <= currentGeometryPoint.boundingBox.max.z) {
-  //     let startIndex = newFaces.findIndex((item) => item.minZ <= zIndex && zIndex <= item.maxZ); // 轮廓起始面片
-  //     let resPoints = [];
-  //     const startContour = (index) => {
-  //       let pointFirst = Vertices[newFaces[index].a];
-  //       let pointSecond = Vertices[newFaces[index].b];
-  //       Vertices[newFaces[index].a]
-  //     }
-  //     startContour(startIndex);
-  //     console.log(newFaces, Vertices, startIndex);
-  //   }
-  // }
-  // sequentialPoints(-1, Faces, Vertices);
+  const {resetData} = require('./algorithmFunction');
+  resetData(Faces, Vertices);
 }
