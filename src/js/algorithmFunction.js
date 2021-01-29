@@ -42,9 +42,10 @@ function resetData(facesData, verticesData) {
           vPoint: pointC,
           vPointIndex: pHashC,
         });
-        resEdge.set(eHashCA, {
+        !resEdge.get(eHashCA) && resEdge.set(eHashCA, {
           includePoints: [pHashC, pHashA], // 包含的点索引
           includeEdge: eHashCA, // 边索引
+          includeFaces: [],
         });
       }
     } else {
@@ -56,37 +57,60 @@ function resetData(facesData, verticesData) {
         vPoint: pointB, // 点坐标
         vPointIndex: pHashB, // 点索引
       });
-      let dataEAB = resEdge.get(eHashAB);
-      !dataEAB && resEdge.set(eHashAB, {
+      !resEdge.get(eHashAB) && resEdge.set(eHashAB, {
         includePoints: [pHashA, pHashB], // 包含的点索引
         includeEdge: eHashAB, // 边索引
+        includeFaces: [],
       });
       if (distancePoint3(pointB, pointC) >= Math.pow(10, -6) && distancePoint3(pointA, pointC) >= Math.pow(10, -6)) {
         resPoints.set(pHashC, {
           vPoint: pointC,
           vPointIndex: pHashC,
         });
+        // 记录面片的z轴最大最小值
+        let faceZHeightArray = [verticesData[item.a].z, verticesData[item.b].z, verticesData[item.c].z].sort((a, b) => a - b);
         resFaces.push({
           includePoints: [pHashA, pHashB, pHashC],
           includeEdge: [eHashAB, eHashBC, eHashCA],
+          zMax: faceZHeightArray[2],
+          zMin: faceZHeightArray[0]
         })
         let currentFaceIndex = resFaces.length - 1;
-        dataEAB?.includeFaces.push(currentFaceIndex);
-        resEdge.set(eHashAB, dataEAB);
+        let edgeABHash = resEdge.get(eHashAB);
+        let edgeBCHash = resEdge.get(eHashBC);
+        let edgeCAHash = resEdge.get(eHashCA);
+        // 返回新面片对应数量
+        const returnNewFaces = (edgeABHash) => {
+          let res = [currentFaceIndex];
+          if(edgeABHash) {
+            res = edgeABHash.includeFaces;
+            res.push(currentFaceIndex);
+          }
+          return res;
+        }
+        resEdge.set(eHashAB, {
+          includePoints: [pHashA, pHashB], // 包含的点索引
+          includeEdge: eHashAB, // 边索引
+          includeFaces: returnNewFaces(edgeABHash),
+        });
         resEdge.set(eHashBC, {
-          includePoints: [pHashB, pHashC], // 包含的点索引
+          includePoints: [pHashA, pHashB], // 包含的点索引
           includeEdge: eHashBC, // 边索引
-          includeFaces: [currentFaceIndex], // 面索引
+          includeFaces: returnNewFaces(edgeBCHash),
         });
         resEdge.set(eHashCA, {
-          includePoints: [pHashC, pHashA], // 包含的点索引
+          includePoints: [pHashA, pHashB], // 包含的点索引
           includeEdge: eHashCA, // 边索引
-          includeFaces: [currentFaceIndex], // 面索引
+          includeFaces: returnNewFaces(edgeCAHash),
         });
-
       }
     }
   })
+  return {
+    resPoints,
+    resEdge,
+    resFaces,
+  }
 }
 
 module.exports = {

@@ -20,6 +20,7 @@ let initialSight = null; // 初始化模型视野
 let testAnimationData = []; // 动画轨迹测试数据
 let currentBuffGeometryPoint = []; // 当前模型点云数据
 let currentGeometryPoint = []; // 当前模型三角面片数据
+let topologicalData = {}; // 拓扑重构后数据
 
 /** 添加帧数监听 **/
 export const statsInit = () => {
@@ -670,5 +671,19 @@ function iniModelTopological() {
   let Faces = currentGeometryPoint.faces;
   let Vertices = currentGeometryPoint.vertices;
   const {resetData} = require('./algorithmFunction');
-  resetData(Faces, Vertices);
+  topologicalData = resetData(Faces, Vertices);
+  console.log(topologicalData)
 }
+
+/** 计算出水平切片点集 **/
+// function getHorizontalSlicePoints(zHeight) {
+//   const {resEdge, resFaces, resPoints} = topologicalData;
+//   let resultPointData = [];
+//   let startFaceIndex = resFaces.findIndex(item => item.zMin <= zHeight && zHeight <= item.zMax); // 任意获得一个符合条件的三角面片
+//   let currentFaceIndex = true; // 判断是否到达初始三角面片
+//   do {
+//     let edgeA = resEdge.get(resFaces[startFaceIndex].includeEdge[0]).vPoint;
+//     let pointB = resPoints.get(resFaces[startFaceIndex].includeEdge[1]).vPoint;
+//     let pointC = resPoints.get(resFaces[startFaceIndex].includeEdge[2]).vPoint;
+//   }while (currentFaceIndex !== startFaceIndex)
+// }
