@@ -449,9 +449,9 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
   const createSliceLayer = (data) => {
     data.forEach((item, index) => {
       const groupName = name + index.toString();
-      const slicePointData = calculateHorizontalSlice(item);
+      const slicePointData = getHorizontalSlicePoints(item);
       slicePointData.length && drawPointByPoints(slicePointData, groupName, color);
-      // slicePointData.length && drawLineByPoints(slicePointData, groupName, color);
+      slicePointData.length && drawLineByPoints(slicePointData, groupName, color);
     })
   }
   createSliceLayer(layersData);
@@ -618,7 +618,14 @@ Math.formatFloat = (f, digit) => {
   return Math.round(f * m) / m;
 }
 
+/** 计算两点线段间与平面交点 **/
+function unitCal(p1, p2, zHeight) {
+  const k = (zHeight - p1.z) / (zHeight - p2.z);
+  return {x: (p1.x - k * p2.x) / (1 - k), y: (p1.y - k * p2.y) / (1 - k), z: zHeight};
+}
+
 /** 计算水平切片轨迹 **/
+// eslint-disable-next-line no-unused-vars
 const calculateHorizontalSlice = (zHeight) => {
   let resultData = [];
   // 每三个点为一个单元计算
@@ -676,14 +683,28 @@ function iniModelTopological() {
 }
 
 /** 计算出水平切片点集 **/
-// function getHorizontalSlicePoints(zHeight) {
-//   const {resEdge, resFaces, resPoints} = topologicalData;
-//   let resultPointData = [];
-//   let startFaceIndex = resFaces.findIndex(item => item.zMin <= zHeight && zHeight <= item.zMax); // 任意获得一个符合条件的三角面片
-//   let currentFaceIndex = true; // 判断是否到达初始三角面片
-//   do {
-//     let edgeA = resEdge.get(resFaces[startFaceIndex].includeEdge[0]).vPoint;
-//     let pointB = resPoints.get(resFaces[startFaceIndex].includeEdge[1]).vPoint;
-//     let pointC = resPoints.get(resFaces[startFaceIndex].includeEdge[2]).vPoint;
-//   }while (currentFaceIndex !== startFaceIndex)
-// }
+function getHorizontalSlicePoints(zHeight) {
+  const {resEdge, resFaces, resPoints} = topologicalData;
+  let resultPointData = [];
+  let startFaceIndex = resFaces.findIndex(item => item.zMin <= zHeight && zHeight <= item.zMax); // 任意获得一个符合条件的三角面片
+  if(startFaceIndex >=0 ){
+    let nextFaceIndex = startFaceIndex; // 下一个计算的三角面片位置
+    let lastEdgeHash = null;
+    do {
+      let finalEdgeHash = null;
+      resFaces[nextFaceIndex].includeEdge.map(edgeHash => {
+        let pointA = resPoints.get(resEdge.get(edgeHash).includePoints[0]).vPoint;
+        let pointB = resPoints.get(resEdge.get(edgeHash).includePoints[1]).vPoint;
+        if (!(pointA.z > zHeight && pointB.z > zHeight || pointA.z < zHeight && pointB.z < zHeight)) {
+          if(lastEdgeHash === null || lastEdgeHash!==edgeHash) {
+            finalEdgeHash = edgeHash;
+            resultPointData.push(unitCal(pointA, pointB, zHeight));
+          }
+        }
+      })
+      lastEdgeHash = finalEdgeHash;
+      nextFaceIndex = resEdge.get(finalEdgeHash).includeFaces.filter(item => item !== nextFaceIndex)[0];
+    } while (nextFaceIndex !== startFaceIndex)
+  }
+  return resultPointData;
+}
