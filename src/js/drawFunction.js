@@ -622,14 +622,6 @@ Math.formatFloat = (f, digit) => {
 
 /** 计算两点线段间与平面交点 **/
 function unitCal(p1, p2, zHeight) {
-  // let p1z = p1
-  // if (p1 === zHeight && p2 !== zHeight) {
-  //   return {x: p1.x, y: p1.y, z: p1.z};
-  // } else if (p1z !== zHeight && p2z === zHeight) {
-  //   return [arrayToObject(p2)];
-  // } else {
-  //
-  // }
   const k = (zHeight - p1.z) / (zHeight - p2.z);
   return {x: (p1.x - k * p2.x) / (1 - k), y: (p1.y - k * p2.y) / (1 - k), z: zHeight};
 }
@@ -687,7 +679,6 @@ const calculateHorizontalSlice = (zHeight) => {
 function iniModelTopological() {
   let Faces = currentGeometryPoint.faces;
   let Vertices = currentGeometryPoint.vertices;
-  console.log(Faces)
   const {resetData} = require('./algorithmFunction');
   topologicalData = resetData(Faces, Vertices);
 }
@@ -696,7 +687,7 @@ function iniModelTopological() {
 function getHorizontalSlicePoints(zHeight) {
   const {resEdge, resFaces, resPoints} = topologicalData;
   let resultPointData = [];
-  let startFaceIndex = resFaces.findIndex(item => item.zMin <= zHeight && zHeight <= item.zMax); // 任意获得一个符合条件的三角面片
+  let startFaceIndex = resFaces.findIndex(item => item.zMin < zHeight && zHeight <= item.zMax || item.zMin <= zHeight && zHeight < item.zMax); // 任意获得一个符合条件的三角面片
   if (startFaceIndex >= 0) {
     let nextFaceIndex = startFaceIndex; // 下一个计算的三角面片位置
     let lastEdgeHash = null;
@@ -705,6 +696,7 @@ function getHorizontalSlicePoints(zHeight) {
       resFaces[nextFaceIndex].includeEdge.map(edgeHash => {
         let pointA = resPoints.get(resEdge.get(edgeHash).includePoints[0]).vPoint;
         let pointB = resPoints.get(resEdge.get(edgeHash).includePoints[1]).vPoint;
+        // console.log(pointA, pointB)
         const p1z = Math.formatFloat(pointA.z, 5);
         const p2z = Math.formatFloat(pointB.z, 5);
         if (p1z === zHeight && p2z !== zHeight) {
