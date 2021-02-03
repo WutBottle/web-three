@@ -450,8 +450,10 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     data.forEach((item, index) => {
       const groupName = name + index.toString();
       const slicePointData = getHorizontalSlicePoints(item);
-      slicePointData.length && drawPointByPoints(slicePointData, groupName, color);
-      slicePointData.length && drawLineByPoints(slicePointData, groupName, color);
+      slicePointData.map(item => {
+        item?.length && drawPointByPoints(item, groupName, color);
+        // item?.length && drawLineByPoints(item, groupName, color);
+      })
     })
   }
   console.time('time');
@@ -460,6 +462,7 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
 }
 
 /** 根据点数组绘制点图形 **/
+// eslint-disable-next-line no-unused-vars
 const drawPointByPoints = (data, groupName, color) => {
   const geometry = new Three.Geometry();//声明一个空几何体对象
   data.forEach(item => {
@@ -467,7 +470,7 @@ const drawPointByPoints = (data, groupName, color) => {
   })
   const material = new Three.PointsMaterial({
     color: color,
-    size: 6
+    size: 3
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
   findObjectByName(groupName).add(points);
@@ -484,7 +487,6 @@ const drawLineByPoints = (data, name, color) => {
   const listPoints = data.map(item => {
     return new Three.Vector3(item.x, item.y, item.z)
   });
-  listPoints.push(data[0]);
   const geometry = new Three.BufferGeometry().setFromPoints(listPoints);
   const material = new Three.MeshBasicMaterial({
     color: color,
@@ -687,38 +689,47 @@ function iniModelTopological() {
 function getHorizontalSlicePoints(zHeight) {
   const {resEdge, resFaces, resPoints} = topologicalData;
   let resultPointData = [];
-  let startFaceIndex = resFaces.findIndex(item => item.zMin < zHeight && zHeight <= item.zMax || item.zMin <= zHeight && zHeight < item.zMax); // 任意获得一个符合条件的三角面片
-  if (startFaceIndex >= 0) {
-    let nextFaceIndex = startFaceIndex; // 下一个计算的三角面片位置
-    let lastEdgeHash = null;
-    do {
-      let finalEdgeHash = null;
-      resFaces[nextFaceIndex].includeEdge.map(edgeHash => {
-        let pointA = resPoints.get(resEdge.get(edgeHash).includePoints[0]).vPoint;
-        let pointB = resPoints.get(resEdge.get(edgeHash).includePoints[1]).vPoint;
-        // console.log(pointA, pointB)
-        const p1z = Math.formatFloat(pointA.z, 5);
-        const p2z = Math.formatFloat(pointB.z, 5);
-        if (p1z === zHeight && p2z !== zHeight) {
-          if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
-            finalEdgeHash = edgeHash;
-            resultPointData.push(pointA);
+  let startFaceIndex;
+  do {
+    startFaceIndex = resFaces.findIndex(item => (item.zMin <= zHeight && zHeight < item.zMax) && (item.zMin < zHeight && zHeight <= item.zMax) && !item.hasSearch); // 任意获得一个符合条件的三角面片
+    if (startFaceIndex >= 0) {
+      resultPointData.push([]); // 初始化首个联通区域数组
+      let currentResIndex = resultPointData.length - 1; // 当前联通区域index
+      let nextFaceIndex = startFaceIndex; // 下一个计算的三角面片位置
+      let lastEdgeHash = null;
+      do {
+        let finalEdgeHash = null;
+        resFaces[nextFaceIndex].hasSearch = true;
+        resFaces[nextFaceIndex].includeEdge.map(edgeHash => {
+          let pointA = resPoints.get(resEdge.get(edgeHash).includePoints[0]).vPoint;
+          let pointB = resPoints.get(resEdge.get(edgeHash).includePoints[1]).vPoint;
+          const p1z = Math.formatFloat(pointA.z, 5);
+          const p2z = Math.formatFloat(pointB.z, 5);
+          if (p1z === zHeight && p2z !== zHeight) {
+            if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
+              finalEdgeHash = edgeHash;
+              resultPointData[currentResIndex].push(pointA);
+            }
+          } else if (p1z !== zHeight && p2z === zHeight) {
+            if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
+              finalEdgeHash = edgeHash;
+              resultPointData[currentResIndex].push(pointB);
+            }
+          } else if ((p1z > zHeight && p2z < zHeight) || (p1z < zHeight && p2z > zHeight)) {
+            if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
+              finalEdgeHash = edgeHash;
+              resultPointData[currentResIndex].push(unitCal(pointA, pointB, zHeight));
+            }
           }
-        } else if (p1z !== zHeight && p2z === zHeight) {
-          if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
-            finalEdgeHash = edgeHash;
-            resultPointData.push(pointB);
-          }
-        } else if ((p1z > zHeight && p2z < zHeight) || (p1z < zHeight && p2z > zHeight)) {
-          if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
-            finalEdgeHash = edgeHash;
-            resultPointData.push(unitCal(pointA, pointB, zHeight));
-          }
-        }
-      })
-      lastEdgeHash = finalEdgeHash;
-      nextFaceIndex = resEdge.get(finalEdgeHash).includeFaces.filter(item => item !== nextFaceIndex)[0];
-    } while (nextFaceIndex !== startFaceIndex)
-  }
+        })
+        lastEdgeHash = finalEdgeHash;
+        // 通过过滤是否被打上遍历标记来判断是否是下一个临接面
+        nextFaceIndex = resEdge.get(finalEdgeHash).includeFaces.filter(item => !resFaces[item].hasSearch)[0];
+      } while (nextFaceIndex !== undefined)
+    }
+  } while (startFaceIndex !== -1)
+  resFaces.forEach(item => {
+    item.hasSearch = false;
+  })
   return resultPointData;
 }
