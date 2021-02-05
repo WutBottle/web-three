@@ -81,15 +81,6 @@
     <div id="statsWrapper"></div>
     <TopBar/>
     <LeftBar/>
-    <!--    <div class="left">-->
-    <!--      <a-tree-->
-    <!--          v-model="checkedKeys"-->
-    <!--          :auto-expand-parent="true"-->
-    <!--          :selected-keys="selectedKeys"-->
-    <!--          :tree-data="treeData"-->
-    <!--          @select="onTreeSelect"-->
-    <!--      />-->
-    <!--    </div>-->
     <div id="webgl"></div>
     <div v-if="loading" id="load-mask">
       <a-progress class="progress" type="circle" :percent="loadingPercent"/>
@@ -112,6 +103,7 @@ import {
 } from '@js/drawFunction';
 import TopBar from "@components/WorkPage/TopBar";
 import LeftBar from "@components/WorkPage/LeftBar";
+import {mapMutations} from 'vuex';
 
 export default {
   name: "WorkPage",
@@ -141,6 +133,10 @@ export default {
     this.loaderSTL(this.modelFile);
   },
   methods: {
+    ...mapMutations({
+      addData: 'loggingData/addData',
+      resetData: 'loggingData/resetData',
+    }),
     // 文件读取入口
     readTXT() {
       const inputFile = this.$refs.filElem.files[0];
@@ -212,10 +208,15 @@ export default {
       this.traverseScene(getScene().children, this.treeData, ''); // 遍历scene进行控制
     },
     loaderSTL(fileUrl) {
+      this.resetData();
       removeGroup();
       this.loading = true;
       let loader = new STLLoader();
       loader.load(fileUrl, (geometry) => {
+        this.addData({
+          action: '模型加载完毕',
+          date: new Date(),
+        })
         drawSTL(geometry, fileUrl);
         this.loading = false;
         this.loadingPercent = 0;

@@ -75,6 +75,9 @@
           <a-menu-item key="animation" @click="playAnimation">
             动画
           </a-menu-item>
+          <a-menu-item key="record" @click="showRecordDrawer">
+            日志
+          </a-menu-item>
         </a-menu>
       </a-dropdown>
     </span>
@@ -170,11 +173,26 @@
     >
       <SceneTree :data="treeData"/>
     </a-drawer>
+    <a-drawer
+      title="日志"
+      placement="right"
+      :visible="recordVisible"
+      :mask="false"
+      width="400"
+      @close="() => this.recordVisible = false"
+    >
+      <a-timeline>
+        <a-timeline-item v-for="(item, index) in logData" :key="index">
+          {{item.action}}------{{moment(item.date).format('YYYY-MM-DD HH:mm:ss')}}
+        </a-timeline-item>
+      </a-timeline>
+    </a-drawer>
   </div>
 </template>
 
 <script>
 import {mapState, mapMutations} from 'vuex';
+import moment from 'moment';
 import {saveAsSTL} from '@js/fileSave';
 import SceneTree from './components/SceneTree';
 import {
@@ -195,10 +213,12 @@ export default {
   computed: {
     ...mapState({
       indexData: state => state.commonData.indexData,
+      logData: state => state.loggingData.logData,
     }),
   },
   data() {
     return {
+      moment,
       setNameVisible: false, // 导出文件名字弹窗控制
       saveName: '',
       sliceFormVisible: false, // 切片信息输入弹窗控制
@@ -221,6 +241,7 @@ export default {
       color: '#ff0000', // 选择颜色
       componentsVisible: false, // 图层抽屉显示
       treeData: [], // 图层数据
+      recordVisible: false, // 日志面板控制
     }
   },
   // 页面后退后清除数据
@@ -230,6 +251,7 @@ export default {
   methods: {
     ...mapMutations({
       deleteTreeDataItem: 'commonData/deleteTreeDataItem',
+      addLogData: 'loggingData/addData',
     }),
     // 处理导出stl文件
     handleSave() {
@@ -260,7 +282,14 @@ export default {
             color: this.color,
           })
           removeObject('水平切片'); // 移除切片
+          const start = window.performance.now();
           makeHorizontalSlice('水平切片', this.horizontalSliceParameter);
+          const end = window.performance.now();
+          const time = Math.round(end - start);
+          this.addLogData({
+            action: '完成水平切片，耗时' + time + 'ms',
+            date: new Date(),
+          })
           render();
           this.sliceFormVisible = false;
           this.flatForm.resetFields();
@@ -298,6 +327,9 @@ export default {
     showComponentsDrawer() {
       this.componentsVisible = !this.componentsVisible;
       this.componentsVisible && (this.treeData = getScene().children); // 如果为真更新数据
+    },
+    showRecordDrawer() {
+      this.recordVisible = true;
     }
   }
 }

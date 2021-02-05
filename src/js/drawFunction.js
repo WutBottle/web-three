@@ -1,6 +1,7 @@
 import * as Three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'stats.js';
+import store from '@/store';
 
 const leftNum = 40; // 页面左侧菜单栏宽度
 const topNum = 29; // 页面顶部菜单栏高度
@@ -303,9 +304,15 @@ export const drawSTL = (geometry, name) => {
   drawGrid(initialSight);
   drawAxis(initialSight);
   resetModel();
-  console.time('time');
+  const start = window.performance.now();
   iniModelTopological();
-  console.timeEnd('time');
+  const end = window.performance.now();
+  const time = Math.round(end - start);
+  const facesNum = currentGeometryPoint.faces.length; // 面片数量
+  store.commit('loggingData/addData', {
+    action: '模型构建拓扑结构完成，共计面片数量：' + facesNum + '，耗时：' + time + 'ms',
+    date: new Date()
+  })
 }
 
 /** 处理页面缩放 **/
@@ -456,9 +463,7 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
       })
     })
   }
-  console.time('time');
   createSliceLayer(layersData);
-  console.timeEnd('time');
 }
 
 /** 根据点数组绘制点图形 **/
