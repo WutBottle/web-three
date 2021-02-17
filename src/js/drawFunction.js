@@ -2,6 +2,7 @@ import * as Three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'stats.js';
 import store from '@/store';
+import Vue from "_vue@2.6.12@vue";
 
 const leftNum = 40; // 页面左侧菜单栏宽度
 const topNum = 29; // 页面顶部菜单栏高度
@@ -22,6 +23,7 @@ let testAnimationData = []; // 动画轨迹测试数据
 let currentBuffGeometryPoint = []; // 当前模型点云数据
 let currentGeometryPoint = []; // 当前模型三角面片数据
 let topologicalData = {}; // 拓扑重构后数据
+let contourPoint = []; // 模型切片轮廓数据
 
 /** 添加帧数监听 **/
 export const statsInit = () => {
@@ -458,8 +460,9 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
       const groupName = name + index.toString();
       const slicePointData = getHorizontalSlicePoints(item);
       slicePointData.map(item => {
+        item?.length && contourPoint.push(item);
         item?.length && drawPointByPoints(item, groupName, color);
-        // item?.length && drawLineByPoints(item, groupName, color);
+        item?.length && drawLineByPoints(item, groupName, color);
       })
     })
   }
@@ -486,9 +489,9 @@ const drawPointByPoints = (data, groupName, color) => {
 // eslint-disable-next-line no-unused-vars
 const drawLineByPoints = (data, name, color) => {
   // 将坐标点逆时针排序
-  data.sort((a, b) => {
-    return Math.atan2(a.x, a.y) - Math.atan2(b.x, b.y);
-  })
+  // data.sort((a, b) => {
+  //   return Math.atan2(a.x, a.y) - Math.atan2(b.x, b.y);
+  // })
   const listPoints = data.map(item => {
     return new Three.Vector3(item.x, item.y, item.z)
   });
@@ -499,6 +502,11 @@ const drawLineByPoints = (data, name, color) => {
   });
   // Create the final object to add to the scene
   const lineObject = new Three.Line(geometry, material);
+  if(!findObjectByName(name)) {
+    let group = new Three.Group();
+    group.name = name;
+    scene.add(group);
+  }
   findObjectByName(name).add(lineObject);
   render();
 }
@@ -737,4 +745,79 @@ function getHorizontalSlicePoints(zHeight) {
     item.hasSearch = false;
   })
   return resultPointData;
+}
+
+/** 构建轮廓边相关信息 **/
+function buildContourInfo(data) {
+  let edgeInfo = [];
+  for (let i = 0; i < data.length - 1; i++) {
+    let sortX = [data[i].x, data[i + 1].x].sort((a, b) => a - b);
+    let sortY = [data[i].y, data[i + 1].y].sort((a, b) => a - b);
+    edgeInfo.push({
+      startPoint: data[i],
+      endPoint: data[i + 1],
+      xMin: Math.formatFloat(sortX[0], 5),
+      xMax: Math.formatFloat(sortX[1], 5),
+      yMin: Math.formatFloat(sortY[0], 5),
+      yMax: Math.formatFloat(sortY[1], 5),
+    })
+  }
+  return edgeInfo;
+}
+
+/** 判断数据为奇偶true为偶数，false为奇数 **/
+function oddEven(num) {
+  return num % 2 === 0;
+}
+
+/** 计算xy坐标轴下交点 **/
+function unitCalXY(p1, p2, yHeight) {
+  if (p1.x === p2.x) {
+    return {x: p1.x, y: yHeight, z: p1.z}
+  } else {
+    return {x: (yHeight - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x, y: yHeight, z: p1.z};
+  }
+}
+
+/** 生成轨迹路径 **/
+export const createdPath = () => {
+  let resultPoints = [];
+  console.log(contourPoint)
+  if (!contourPoint.length) {
+    Vue.prototype.$message.info('暂无切片数据!');
+  } else {
+    contourPoint.map(item => {
+      let density = 0.5; // 扫描线密度
+      let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
+      let startY = Math.max.apply(Math, currentContourInfo.map(item => item.yMax)); // 扫描线初始高度
+      let endY = Math.min.apply(Math, currentContourInfo.map(item => item.yMin)); // 扫描线截止高度
+      for (let yHeight = startY; yHeight >= endY; yHeight = yHeight - density) {
+        let intersectData = currentContourInfo.filter(item => item.yMin <= yHeight && yHeight <= item.yMax); // 与当前扫描线相交线段数据
+        let intersectPoints = []; // 交点个数
+        for (let i = 0; i < intersectData.length;) {
+          if (intersectData[i].yMin < yHeight && yHeight < intersectData[i].yMax) {
+            intersectPoints.push(unitCalXY(intersectData[i].startPoint, intersectData[i].endPoint, yHeight));
+            i++;
+          } else if (i < intersectData.length - 1 && intersectData[i].yMin === intersectData[i + 1].yMin && yHeight === intersectData[i].yMin) {
+            intersectPoints.push(intersectData[i].startPoint.y - intersectData[i].endPoint.y ? intersectData[i].endPoint : intersectData[i].startPoint);
+            i += 2;
+          } else {
+            i += 2;
+          }
+        }
+        if (oddEven(intersectPoints.length)) {
+          for (let i = 0; i < intersectPoints.length; i += 2) {
+            resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
+          }
+        } else {
+          for (let i = 0; i < intersectPoints.length - 1; i++) {
+            resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
+          }
+        }
+      }
+      resultPoints.map(item => {
+        drawLineByPoints(item, '切片轨迹', 0x885533);
+      })
+    })
+  }
 }

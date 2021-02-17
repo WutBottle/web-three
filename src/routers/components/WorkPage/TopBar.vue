@@ -72,6 +72,9 @@
           <a-menu-item key="slice" @click="() => this.sliceFormVisible = true">
             切片
           </a-menu-item>
+          <a-menu-item key="path" @click="buildPath">
+            轨迹生成
+          </a-menu-item>
           <a-menu-item key="animation" @click="playAnimation">
             动画
           </a-menu-item>
@@ -201,7 +204,8 @@ import {
   removeObject,
   removeAll,
   render,
-  getScene
+  getScene,
+  createdPath
   // animationDrawLine
 } from '@js/drawFunction';
 
@@ -252,6 +256,7 @@ export default {
     ...mapMutations({
       deleteTreeDataItem: 'commonData/deleteTreeDataItem',
       addLogData: 'loggingData/addData',
+      addData: 'loggingData/addData',
     }),
     // 处理导出stl文件
     handleSave() {
@@ -282,6 +287,7 @@ export default {
             color: this.color,
           })
           removeObject('水平切片'); // 移除切片
+          removeObject('切片轨迹'); // 移除切片轨迹
           const start = window.performance.now();
           makeHorizontalSlice('水平切片', this.horizontalSliceParameter);
           const end = window.performance.now();
@@ -330,6 +336,13 @@ export default {
     },
     showRecordDrawer() {
       this.recordVisible = true;
+    },
+    buildPath() {
+      createdPath();
+      this.addData({
+        action: '路径生成完毕',
+        date: new Date(),
+      })
     }
   }
 }
