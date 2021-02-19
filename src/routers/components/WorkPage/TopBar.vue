@@ -72,7 +72,7 @@
           <a-menu-item key="slice" @click="() => this.sliceFormVisible = true">
             切片
           </a-menu-item>
-          <a-menu-item key="path" @click="buildPath">
+          <a-menu-item key="path" @click="() => this.pathVisible = true">
             轨迹生成
           </a-menu-item>
           <a-menu-item key="animation" @click="playAnimation">
@@ -190,6 +190,27 @@
         </a-timeline-item>
       </a-timeline>
     </a-drawer>
+    <a-modal
+        title="轨迹生成"
+        v-model="pathVisible"
+        okText="确定"
+        cancelText="取消"
+        @ok="buildPath"
+    >
+      <a-form :form="pathForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
+        <a-form-item label="轨迹密度">
+          <a-input
+              placeholder="请输入轨迹密度"
+              v-decorator="['pathDensity', { rules: [{ required: true, message: '请输入轨迹密度!' }] }]"
+          />
+        </a-form-item>
+        <a-form-item label="绘制颜色">
+          <colorPicker
+              v-model="color"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -229,6 +250,7 @@ export default {
       sliceTabsKey: 'flat', // 切片信息面板
       coneForm: this.$form.createForm(this, {name: 'coneForm'}), // 锥面切片表单
       flatForm: this.$form.createForm(this, {name: 'flatForm'}), // 平面切片表单
+      pathForm: this.$form.createForm(this, {name: 'pathForm'}), // 路径轨迹表单
       cylinderGeometryParameter: { //
         radiusTop: 20, // 顶部半径
         radiusBottom: 20, // 底部半径
@@ -246,6 +268,7 @@ export default {
       componentsVisible: false, // 图层抽屉显示
       treeData: [], // 图层数据
       recordVisible: false, // 日志面板控制
+      pathVisible: false, // 轨迹参数弹窗控制
     }
   },
   // 页面后退后清除数据
@@ -338,10 +361,18 @@ export default {
       this.recordVisible = true;
     },
     buildPath() {
-      createdPath();
-      this.addData({
-        action: '路径生成完毕',
-        date: new Date(),
+      this.pathForm.validateFields((err, values) => {
+        if (!err) {
+          createdPath({
+            pathDensity: values.pathDensity,
+            color: this.color,
+          });
+          this.addData({
+            action: '路径生成完毕',
+            date: new Date(),
+          });
+          this.pathVisible = false;
+        }
       })
     }
   }

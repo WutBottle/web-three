@@ -780,14 +780,12 @@ function unitCalXY(p1, p2, yHeight) {
 }
 
 /** 生成轨迹路径 **/
-export const createdPath = () => {
+export const createdPath = ({pathDensity: density, color}) => {
   let resultPoints = [];
-  console.log(contourPoint)
   if (!contourPoint.length) {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
     contourPoint.map(item => {
-      let density = 0.5; // 扫描线密度
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
       let startY = Math.max.apply(Math, currentContourInfo.map(item => item.yMax)); // 扫描线初始高度
       let endY = Math.min.apply(Math, currentContourInfo.map(item => item.yMin)); // 扫描线截止高度
@@ -816,7 +814,7 @@ export const createdPath = () => {
         }
       }
       resultPoints.map(item => {
-        drawLineByPoints(item, '切片轨迹', 0x885533);
+        drawLineByPoints(item, '切片轨迹', color);
       })
     })
   }
