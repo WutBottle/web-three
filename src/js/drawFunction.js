@@ -455,12 +455,13 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     layersData.push(startHeight + i * thick);
   }
   scene.add(groupArray);
-  const createSliceLayer = (data) => {
-    data.forEach((item, index) => {
+  const createSliceLayer = (zArray) => {
+    zArray.forEach((item, index) => {
       const groupName = name + index.toString();
       const slicePointData = getHorizontalSlicePoints(item);
-      slicePointData.map(item => {
-        item?.length && contourPoint.push(item);
+      contourPoint.push([]);
+      slicePointData.map((item) => {
+        item?.length && contourPoint[index].push(item);
         item?.length && drawPointByPoints(item, groupName, color);
         item?.length && drawLineByPoints(item, groupName, color);
       })
@@ -502,7 +503,7 @@ const drawLineByPoints = (data, name, color) => {
   });
   // Create the final object to add to the scene
   const lineObject = new Three.Line(geometry, material);
-  if(!findObjectByName(name)) {
+  if (!findObjectByName(name)) {
     let group = new Three.Group();
     group.name = name;
     scene.add(group);
@@ -749,20 +750,69 @@ function getHorizontalSlicePoints(zHeight) {
 
 /** 构建轮廓边相关信息 **/
 function buildContourInfo(data) {
-  let edgeInfo = [];
-  for (let i = 0; i < data.length - 1; i++) {
-    let sortX = [data[i].x, data[i + 1].x].sort((a, b) => a - b);
-    let sortY = [data[i].y, data[i + 1].y].sort((a, b) => a - b);
-    edgeInfo.push({
-      startPoint: data[i],
-      endPoint: data[i + 1],
-      xMin: Math.formatFloat(sortX[0], 5),
-      xMax: Math.formatFloat(sortX[1], 5),
-      yMin: Math.formatFloat(sortY[0], 5),
-      yMax: Math.formatFloat(sortY[1], 5),
+  let distinguishMatrix = new Array(data.length); // 初始化内外轮廓判别矩阵
+  let contourInfo = []; // 轮廓信息
+  let edgeInfo = []; // 轮廓边信息
+  // 将每个轮廓区域范围计算出来以及轮廓边信息规范化
+  data.map(item => {
+    edgeInfo = []; // 轮廓边信息初始化
+    let tempXMin = Infinity, tempXMax = -Infinity, tempYMin = Infinity, tempYMax = -Infinity; // 每个轮廓区域边界
+    for (let i = 0; i < item.length - 1; i++) {
+      let sortX = [item[i].x, item[i + 1].x].sort((a, b) => a - b);
+      let sortY = [item[i].y, item[i + 1].y].sort((a, b) => a - b);
+      tempXMin = sortX[0] <= tempXMin ? sortX[0] : tempXMin;
+      tempXMax = sortX[1] >= tempXMax ? sortX[1] : tempXMax;
+      tempYMin = sortY[0] <= tempYMin ? sortY[0] : tempYMin;
+      tempYMax = sortY[1] >= tempYMax ? sortY[1] : tempYMax;
+      edgeInfo.push({
+        startPoint: item[i],
+        endPoint: item[i + 1],
+        xMin: Math.formatFloat(sortX[0], 5),
+        xMax: Math.formatFloat(sortX[1], 5),
+        yMin: Math.formatFloat(sortY[0], 5),
+        yMax: Math.formatFloat(sortY[1], 5),
+      })
+    }
+    contourInfo.push({
+      xMin: tempXMin,
+      xMax: tempXMax,
+      yMin: tempYMin,
+      yMax: tempYMax,
+      edgeInfo: edgeInfo,
     })
+  })
+  // 计算判别矩阵
+  for (let i = 0; i < contourInfo.length; i++) {
+    distinguishMatrix[i] = []; // 初始化判别数组
+    for (let j = 0; j < contourInfo.length; j++) {
+      // 判断非自身轮廓且包含自身轮廓的数据，存入判别数组
+      if (j !== i && contourInfo[i].xMin > contourInfo[j].xMin && contourInfo[i].xMax < contourInfo[j].xMax && contourInfo[i].yMin > contourInfo[j].yMin && contourInfo[i].yMax < contourInfo[j].yMax) {
+        distinguishMatrix[i].push({
+          index: j,
+          xMin: contourInfo[j].xMin,
+        })
+      }
+    }
   }
-  return edgeInfo;
+  // 对判别数组进行遍历，如果被包含轮廓数量为偶数则为外轮廓无需处理，如果为奇数则寻找最接近的父轮廓进行合并
+  distinguishMatrix.map((item, index) => {
+    // 为奇数则寻找最近的父轮廓
+    if(!oddEven(item.length)) {
+      item.sort((a, b) => b.xMin - a.xMin); // 将最接近的轮廓排序到最前面
+      let fatherIndex = item[0].index;
+      // 合并轮廓
+      contourInfo[index] = {
+        xMin: contourInfo[fatherIndex].xMin,
+        xMax: contourInfo[fatherIndex].xMax,
+        yMin: contourInfo[fatherIndex].yMin,
+        yMax: contourInfo[fatherIndex].yMax,
+        edgeInfo: contourInfo[index].edgeInfo.concat(contourInfo[fatherIndex].edgeInfo),
+      }
+      // 剔除父亲轮廓数据
+      contourInfo.splice(fatherIndex, 1);
+    }
+  })
+  return contourInfo;
 }
 
 /** 判断数据为奇偶true为偶数，false为奇数 **/
@@ -787,34 +837,37 @@ export const createdPath = ({pathDensity: density, color}) => {
   } else {
     contourPoint.map(item => {
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
-      let startY = Math.max.apply(Math, currentContourInfo.map(item => item.yMax)); // 扫描线初始高度
-      let endY = Math.min.apply(Math, currentContourInfo.map(item => item.yMin)); // 扫描线截止高度
-      for (let yHeight = startY; yHeight >= endY; yHeight = yHeight - density) {
-        let intersectData = currentContourInfo.filter(item => item.yMin <= yHeight && yHeight <= item.yMax); // 与当前扫描线相交线段数据
-        let intersectPoints = []; // 交点个数
-        for (let i = 0; i < intersectData.length;) {
-          if (intersectData[i].yMin < yHeight && yHeight < intersectData[i].yMax) {
-            intersectPoints.push(unitCalXY(intersectData[i].startPoint, intersectData[i].endPoint, yHeight));
-            i++;
-          } else if (i < intersectData.length - 1 && intersectData[i].yMin === intersectData[i + 1].yMin && yHeight === intersectData[i].yMin) {
-            intersectPoints.push(intersectData[i].startPoint.y - intersectData[i].endPoint.y ? intersectData[i].endPoint : intersectData[i].startPoint);
-            i += 2;
+      currentContourInfo.map(contourItem => {
+        let startY = contourItem.yMax; // 扫描线初始高度
+        let endY = contourItem.yMin; // 扫描线截止高度
+        for (let yHeight = startY; yHeight >= endY; yHeight = yHeight - density) {
+          let intersectData = contourItem.edgeInfo.filter(item => item.yMin <= yHeight && yHeight <= item.yMax); // 与当前扫描线相交线段数据
+          let intersectPoints = []; // 交点个数
+          for (let i = 0; i < intersectData.length;) {
+            if (intersectData[i].yMin < yHeight && yHeight < intersectData[i].yMax) {
+              intersectPoints.push(unitCalXY(intersectData[i].startPoint, intersectData[i].endPoint, yHeight));
+              i++;
+            } else if (i < intersectData.length - 1 && intersectData[i].yMin === intersectData[i + 1].yMin && yHeight === intersectData[i].yMin) {
+              intersectPoints.push(intersectData[i].startPoint.y - intersectData[i].endPoint.y ? intersectData[i].endPoint : intersectData[i].startPoint);
+              i += 2;
+            } else {
+              i += 2;
+            }
+          }
+          intersectPoints.sort((a, b) => a.x - b.x); // 按照x坐标排序
+          if (oddEven(intersectPoints.length)) {
+            for (let i = 0; i < intersectPoints.length; i += 2) {
+              resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
+            }
           } else {
-            i += 2;
+            for (let i = 0; i < intersectPoints.length - 1; i++) {
+              resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
+            }
           }
         }
-        if (oddEven(intersectPoints.length)) {
-          for (let i = 0; i < intersectPoints.length; i += 2) {
-            resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
-          }
-        } else {
-          for (let i = 0; i < intersectPoints.length - 1; i++) {
-            resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
-          }
-        }
-      }
-      resultPoints.map(item => {
-        drawLineByPoints(item, '切片轨迹', color);
+        resultPoints.map(item => {
+          drawLineByPoints(item, '切片轨迹', color);
+        })
       })
     })
   }
