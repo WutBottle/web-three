@@ -19,11 +19,11 @@ let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
 
-let testAnimationData = []; // 动画轨迹测试数据
 let currentBuffGeometryPoint = []; // 当前模型点云数据
 let currentGeometryPoint = []; // 当前模型三角面片数据
 let topologicalData = {}; // 拓扑重构后数据
 let contourPoint = []; // 模型切片轮廓数据
+let pathPoints = []; // 轨迹规划路径数据
 
 /** 添加帧数监听 **/
 export const statsInit = () => {
@@ -377,54 +377,60 @@ export const showHide = (name, val) => {
 
 /** 动画效果绘制线 **/
 export const animationDrawLine = () => {
-  let curve = new Three.CatmullRomCurve3(testAnimationData, false/*是否闭合*/);
+  if(pathPoints.length) {
+    let sphereGeometry = new Three.SphereGeometry(0.5);
+    let sphereMaterial = new Three.MeshBasicMaterial({
+      color: 0x7777ff
+    }); //材质对象
+    let sphere = new Three.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(sphere);
+    sphere.position.set(-10, -50, -50)
+    let curvePoints = [];
+    pathPoints.forEach(item => {
+      item.forEach(i => {
+        curvePoints.push(new  Three.Vector3(i.x, i.y, i.z))
+      })
+    })
+    // 通过类CatmullRomCurve3创建一个3D样条曲线
+    let curve = new Three.CatmullRomCurve3(curvePoints);
+    // 样条曲线均匀分割curvePointsLen个顶点坐标
+    let points = curve.getPoints(curvePoints.length * 3);
+    let curvePointsLen = points.length;
+    // 通过Threejs的帧动画相关API播放网格模型沿着曲线做动画运动
+    // 声明一个数组用于存储时间序列
+    let arr = []
+    for (let i = 0; i < curvePointsLen; i++) {
+      arr.push(i)
+    }
+    // 生成一个时间序列
+    let times = new Float32Array(arr);
 
-  let tubeGeometry = new Three.TubeGeometry(curve, 100, 1, 100, false);
-  let tubeMaterial = new Three.MeshBasicMaterial({color: 0xbbff00, wireframe: false})
-  let tube = new Three.Mesh(tubeGeometry, tubeMaterial);
-  scene.add(tube);
+    let posArr = []
+    points.forEach(elem => {
+      posArr.push(elem.x, elem.y, elem.z)
+    });
+    // 创建一个和时间序列相对应的位置坐标系列
+    let values = new Float32Array(posArr);
+    // 创建一个帧动画的关键帧数据，曲线上的位置序列对应一个时间序列
+    let posTrack = new Three.KeyframeTrack('.position', times, values);
+    let duration = curvePointsLen;
+    let clip = new Three.AnimationClip("default", duration, [posTrack]);
+    let mixer = new Three.AnimationMixer(sphere);
+    let AnimationAction = mixer.clipAction(clip);
+    AnimationAction.timeScale = 8;
+    AnimationAction.play();
 
-  let box = new Three.SphereGeometry(1, 20, 20);
-  let material = new Three.MeshBasicMaterial({
-    color: 0x7777ff
-  }); //材质对象
-  let mesh = new Three.Mesh(box, material);
-  scene.add(mesh);
-  mesh.position.set(-600, 0, 300)
-  scene.add(mesh);
-
-  let points = curve.getPoints(100);
-  // 声明一个数组用于存储时间序列
-  let arr = [];
-  for (let i = 0; i < 101; i++) {
-    arr.push(i);
-  }
-  // 生成一个时间序列
-  let times = new Float32Array(arr);
-
-  let posArr = [];
-  points.forEach(elem => {
-    posArr.push(elem.x, elem.y, elem.z)
-  });
-  // 创建一个和时间序列相对应的位置坐标系列
-  let values = new Float32Array(posArr);
-  // 创建一个帧动画的关键帧数据，曲线上的位置序列对应一个时间序列
-  let posTrack = new Three.KeyframeTrack('.position', times, values);
-  let duration = 101;
-  let clip = new Three.AnimationClip("default", duration, [posTrack]);
-  let mixer = new Three.AnimationMixer(mesh);
-  let AnimationAction = mixer.clipAction(clip);
-  AnimationAction.timeScale = 3; // 调节播放速度
-  AnimationAction.play();
-
-  let clock = new Three.Clock();
-  const renderA = () => {
+    let clock = new Three.Clock();//声明一个时钟对象
+    const render = () => {
+      renderer.render(scene, camera);
+      requestAnimationFrame(render);
+      // 更新帧动画的时间
+      mixer.update(clock.getDelta());
+    }
     render();
-    requestAnimationFrame(renderA);
-    // 更新帧动画的时间
-    mixer.update(clock.getDelta());
+  }else {
+    Vue.prototype.$message.info('暂无轨迹数据!');
   }
-  renderA();
 }
 
 /** 绘制水平切片 **/
@@ -488,7 +494,6 @@ const drawPointByPoints = (data, groupName, color) => {
 }
 
 /** 根据点数组绘制包围轨迹图形 **/
-// eslint-disable-next-line no-unused-vars
 const drawLineByPoints = (data, name, color) => {
   // 将坐标点逆时针排序
   // data.sort((a, b) => {
@@ -504,11 +509,6 @@ const drawLineByPoints = (data, name, color) => {
   });
   // Create the final object to add to the scene
   const lineObject = new Three.Line(geometry, material);
-  if (!findObjectByName(name)) {
-    let group = new Three.Group();
-    group.name = name;
-    scene.add(group);
-  }
   findObjectByName(name).add(lineObject);
   render();
 }
@@ -799,7 +799,7 @@ function buildContourInfo(data) {
   // 对判别数组进行遍历，如果被包含轮廓数量为偶数则为外轮廓无需处理，如果为奇数则寻找最接近的父轮廓进行合并
   distinguishMatrix.forEach((item, index) => {
     // 为奇数则寻找最近的父轮廓
-    if(!oddEven(item.length)) {
+    if (!oddEven(item.length)) {
       item.sort((a, b) => b.xMin - a.xMin); // 将最接近的轮廓排序到最前面
       let fatherIndex = item[0].index;
       // 合并轮廓
@@ -835,9 +835,7 @@ function unitCalXY(p1, p2, yHeight) {
 }
 
 /** 生成轨迹路径 **/
-// eslint-disable-next-line no-unused-vars
 export const createdPath = ({pathDensity: density, color}) => {
-  let resultPoints = [];
   if (!contourPoint.length) {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
@@ -863,19 +861,36 @@ export const createdPath = ({pathDensity: density, color}) => {
           intersectPoints.sort((a, b) => a.x - b.x); // 按照x坐标排序
           if (oddEven(intersectPoints.length)) {
             for (let i = 0; i < intersectPoints.length; i += 2) {
-              resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
+              pathPoints.push([intersectPoints[i], intersectPoints[i + 1]])
             }
           } else {
             for (let i = 0; i < intersectPoints.length - 1; i++) {
-              resultPoints.push([intersectPoints[i], intersectPoints[i + 1]])
+              pathPoints.push([intersectPoints[i], intersectPoints[i + 1]])
             }
           }
         }
       })
     })
-    resultPoints.forEach(item => {
-      drawLineByPoints(item, '切片轨迹', color);
-    })
+    drawPathLineByPoints(pathPoints, '切片轨迹', color);
   }
-  return resultPoints;
+}
+
+/** 根据点数组绘制轨迹规划路径 **/
+function drawPathLineByPoints(data, name, color) {
+  let group = new Three.Group();
+  group.name = name;
+  for (let i = 0; i < data.length; i++) {
+    const geometry = new Three.BufferGeometry().setFromPoints([
+      new Three.Vector3(data[i][0].x, data[i][0].y, data[i][0].z),
+      new Three.Vector3(data[i][1].x, data[i][1].y, data[i][1].z)
+    ]);
+    const material = new Three.MeshBasicMaterial({
+      color: color,
+      side: Three.DoubleSide,
+    });
+    const lineObject = new Three.Line(geometry, material);
+    group.add(lineObject);
+  }
+  scene.add(group);
+  render();
 }

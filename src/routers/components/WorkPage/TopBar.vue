@@ -226,8 +226,8 @@ import {
   removeAll,
   render,
   getScene,
-  createdPath
-  // animationDrawLine
+  createdPath,
+  animationDrawLine
 } from '@js/drawFunction';
 
 export default {
@@ -349,8 +349,8 @@ export default {
     },
     // 播放动画
     playAnimation() {
-      this.$message.info('该功能正在开发中...')
-      // animationDrawLine();
+      // this.$message.info('该功能正在开发中...');
+      animationDrawLine();
     },
     // 显示图层树形菜单
     showComponentsDrawer() {
