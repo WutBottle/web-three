@@ -363,12 +363,13 @@ export default {
     buildPath() {
       this.pathForm.validateFields((err, values) => {
         if (!err) {
+          removeObject('切片轨迹');
           createdPath({
             pathDensity: values.pathDensity,
             color: this.color,
           });
           this.addData({
-            action: '路径生成完毕',
+            action: '路径生成完毕，切片密度为:' + values.pathDensity,
             date: new Date(),
           });
           this.pathVisible = false;

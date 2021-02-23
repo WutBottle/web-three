@@ -455,6 +455,7 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     layersData.push(startHeight + i * thick);
   }
   scene.add(groupArray);
+  contourPoint = []; // 初始化轮廓点集合
   const createSliceLayer = (zArray) => {
     zArray.forEach((item, index) => {
       const groupName = name + index.toString();
@@ -753,8 +754,9 @@ function buildContourInfo(data) {
   let distinguishMatrix = new Array(data.length); // 初始化内外轮廓判别矩阵
   let contourInfo = []; // 轮廓信息
   let edgeInfo = []; // 轮廓边信息
+  let removeIndex = []; // 合并轮廓后需要被移除的轮廓索引
   // 将每个轮廓区域范围计算出来以及轮廓边信息规范化
-  data.map(item => {
+  data.forEach(item => {
     edgeInfo = []; // 轮廓边信息初始化
     let tempXMin = Infinity, tempXMax = -Infinity, tempYMin = Infinity, tempYMax = -Infinity; // 每个轮廓区域边界
     for (let i = 0; i < item.length - 1; i++) {
@@ -795,7 +797,7 @@ function buildContourInfo(data) {
     }
   }
   // 对判别数组进行遍历，如果被包含轮廓数量为偶数则为外轮廓无需处理，如果为奇数则寻找最接近的父轮廓进行合并
-  distinguishMatrix.map((item, index) => {
+  distinguishMatrix.forEach((item, index) => {
     // 为奇数则寻找最近的父轮廓
     if(!oddEven(item.length)) {
       item.sort((a, b) => b.xMin - a.xMin); // 将最接近的轮廓排序到最前面
@@ -808,9 +810,12 @@ function buildContourInfo(data) {
         yMax: contourInfo[fatherIndex].yMax,
         edgeInfo: contourInfo[index].edgeInfo.concat(contourInfo[fatherIndex].edgeInfo),
       }
-      // 剔除父亲轮廓数据
-      contourInfo.splice(fatherIndex, 1);
+      // 存储需要被移除的轮廓索引
+      removeIndex.push(fatherIndex)
     }
+  })
+  removeIndex.forEach(item => {
+    contourInfo.splice(item, 1);
   })
   return contourInfo;
 }
@@ -830,14 +835,15 @@ function unitCalXY(p1, p2, yHeight) {
 }
 
 /** 生成轨迹路径 **/
+// eslint-disable-next-line no-unused-vars
 export const createdPath = ({pathDensity: density, color}) => {
   let resultPoints = [];
   if (!contourPoint.length) {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
-    contourPoint.map(item => {
+    contourPoint.forEach(item => {
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
-      currentContourInfo.map(contourItem => {
+      currentContourInfo.forEach(contourItem => {
         let startY = contourItem.yMax; // 扫描线初始高度
         let endY = contourItem.yMin; // 扫描线截止高度
         for (let yHeight = startY; yHeight >= endY; yHeight = yHeight - density) {
@@ -865,10 +871,11 @@ export const createdPath = ({pathDensity: density, color}) => {
             }
           }
         }
-        resultPoints.map(item => {
-          drawLineByPoints(item, '切片轨迹', color);
-        })
       })
     })
+    resultPoints.forEach(item => {
+      drawLineByPoints(item, '切片轨迹', color);
+    })
   }
+  return resultPoints;
 }
