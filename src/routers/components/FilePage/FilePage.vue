@@ -31,7 +31,7 @@
         </div>
         <div class="exit-button">
           <a-dropdown-button>
-            您好，{{ nickname }}!
+            您好！
             <a-menu slot="overlay" @click="handleMenuClick">
               <a-menu-item key="logout">
                 <a-icon type="logout"/>
@@ -51,11 +51,11 @@
           <a-menu-item key="my">
             我的模型库
           </a-menu-item>
-          <a-menu-item key="official">
-            官方模型库
-          </a-menu-item>
           <a-menu-item key="all">
             所有模型库
+          </a-menu-item>
+          <a-menu-item key="userCenter">
+            个人中心
           </a-menu-item>
         </a-menu>
       </a-layout-header>
@@ -72,23 +72,21 @@
 
 <script>
 import MyModel from "@components/FilePage/MyModel/MyModel";
-import OfficialModel from "@components/FilePage/OfficialModel/OfficialModel";
 import AllModel from "@components/FilePage/AllModel/AllModel";
+import UserCenter from "@components/FilePage/UserCenter/UserCenter";
 import api from '@api/apiSugar';
 
 export default {
   name: "FilePage",
   comments: {
     MyModel,
-    OfficialModel,
     AllModel,
+    UserCenter
   },
   data() {
     return {
       menuKey: ['my'],
       currentComponent: MyModel,
-      username: window.localStorage.getItem('username'),
-      nickname: window.localStorage.getItem('nickname'),
     }
   },
   methods: {
@@ -97,27 +95,31 @@ export default {
         case 'my' :
           this.currentComponent = MyModel;
           break;
-        case 'official':
-          this.currentComponent = OfficialModel;
-          break;
         case 'all':
           this.currentComponent = AllModel;
+          break;
+        case 'userCenter':
+          this.currentComponent = UserCenter;
           break;
         default:
           break;
       }
     },
     handleMenuClick({key}) {
-      console.log(key)
-      key === 'logout' && api.tokensController.logout().then(res => {
-        console.log(res)
-        if(res.data.success){
-          this.$message.success(res.data.message);
-          this.$router.push('/login');
-        }else {
-          this.$message.error(res.data.message);
-        }
-      })
+      switch (key) {
+        case 'logout':
+          api.tokensController.logout().then(res => {
+            if (res.data.success) {
+              this.$message.success(res.data.message);
+              this.$router.push('/login');
+            } else {
+              this.$message.error(res.data.message);
+            }
+          })
+          break;
+        default:
+          break;
+      }
     }
   }
 }

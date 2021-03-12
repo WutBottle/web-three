@@ -43,17 +43,17 @@ function resetData(facesData, verticesData) {
     let faceZHeightArray = [verticesData[item.a].z, verticesData[item.b].z, verticesData[item.c].z].sort((a, b) => a - b);
     if (Math.abs(faceZHeightArray[0] - faceZHeightArray[2]) > Math.pow(10, -5)) {
       resFaces.push({
-        includePoints: [pHashA, pHashB, pHashC],
-        includeEdge: [eHashAB, eHashBC, eHashCA],
-        zMax: faceZHeightArray[2],
-        zMin: faceZHeightArray[0],
-        hasSearch: false,
+        includePoints: [pHashA, pHashB, pHashC], // 点索引
+        includeEdge: [eHashAB, eHashBC, eHashCA],// 边索引
+        zMax: faceZHeightArray[2], // 面片Z轴最大高度
+        zMin: faceZHeightArray[0], // 面片Z轴最小高度
+        hasSearch: false, // 是否已经被搜索
       })
       let currentFaceIndex = resFaces.length - 1;
       let edgeABHash = resEdge.get(eHashAB);
       let edgeBCHash = resEdge.get(eHashBC);
       let edgeCAHash = resEdge.get(eHashCA);
-      // 返回新面片对应数量
+      // 根据边哈希值返回每条边相邻的两个面片
       const returnNewFaces = (edgeABHash) => {
         let res = [currentFaceIndex];
         if (edgeABHash) {
@@ -65,7 +65,7 @@ function resetData(facesData, verticesData) {
       resEdge.set(eHashAB, {
         includePoints: [pHashA, pHashB], // 包含的点索引
         includeEdge: eHashAB, // 边索引
-        includeFaces: returnNewFaces(edgeABHash),
+        includeFaces: returnNewFaces(edgeABHash), // 每条边包含的相邻两个面片
       });
       resEdge.set(eHashBC, {
         includePoints: [pHashB, pHashC], // 包含的点索引

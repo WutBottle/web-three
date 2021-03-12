@@ -19,7 +19,15 @@ const tokensController = {
   // 注册用户
   registerUser(params) {
     return axios.post(`${baseUrl.tokensController}/register`, params)
-  }
+  },
+  // 获取用户基本信息
+  getUserInfo(params) {
+    return axios.get(`${baseUrl.tokensController}/userInfo`, {params});
+  },
+  // 修改用户信息
+  updateUserInfo(params) {
+    return axios.post(`${baseUrl.tokensController}/updateUserInfo`, params)
+  },
 };
 
 export default tokensController;
