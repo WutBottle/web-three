@@ -19,7 +19,6 @@ let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
 
-let currentBuffGeometryPoint = []; // 当前模型点云数据
 let currentGeometryPoint = []; // 当前模型三角面片数据
 let topologicalData = {}; // 拓扑重构后数据
 let contourPoint = []; // 模型切片轮廓数据
@@ -288,7 +287,6 @@ export const drawSTL = (geometry, name) => {
   // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
   geometry.computeBoundingBox();
   currentGeometryPoint = new Three.Geometry().fromBufferGeometry(geometry).clone();
-  currentBuffGeometryPoint = geometry.attributes.position.array;
   boundingBox = geometry.boundingBox;
   createSurroundBox(boundingBox);
   initialSight = computeSight(boundingBox);
@@ -641,55 +639,6 @@ Math.formatFloat = (f, digit) => {
 function unitCal(p1, p2, zHeight) {
   const k = (zHeight - p1.z) / (zHeight - p2.z);
   return {x: (p1.x - k * p2.x) / (1 - k), y: (p1.y - k * p2.y) / (1 - k), z: zHeight};
-}
-
-/** 计算水平切片轨迹 **/
-// eslint-disable-next-line no-unused-vars
-const calculateHorizontalSlice = (zHeight) => {
-  let resultData = [];
-  // 每三个点为一个单元计算
-  const unitCal = (p1, p2) => {
-    const arrayToObject = (pointArray) => {
-      return {
-        x: Math.formatFloat(pointArray[0], 5),
-        y: Math.formatFloat(pointArray[1], 5),
-        z: Math.formatFloat(pointArray[2], 5),
-      }
-    }
-    const p1z = Math.formatFloat(p1[2], 5);
-    const p2z = Math.formatFloat(p2[2], 5);
-    if ((p1z > zHeight && p2z > zHeight) || (p1z < zHeight && p2z < zHeight)) {
-      return [];
-    } else if (p1z === zHeight && p2z === zHeight) {
-      return [arrayToObject(p1), arrayToObject(p2)];
-    } else if (p1z === zHeight && p2z !== zHeight) {
-      return [arrayToObject(p1)];
-    } else if (p1z !== zHeight && p2z === zHeight) {
-      return [arrayToObject(p2)];
-    } else {
-      const k = (zHeight - p1[2]) / (zHeight - p2[2]);
-      let res = new Array(3);
-      res[0] = (p1[0] - k * p2[0]) / (1 - k);
-      res[1] = (p1[1] - k * p2[1]) / (1 - k);
-      res[2] = zHeight;
-      return [arrayToObject(res)];
-    }
-  }
-
-  for (let i = 0; i < currentBuffGeometryPoint.length; i += 9) {
-    resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i, i + 3), currentBuffGeometryPoint.slice(i + 3, i + 6)));
-    resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i + 3, i + 6), currentBuffGeometryPoint.slice(i + 6, i + 9)));
-    resultData = resultData.concat(unitCal(currentBuffGeometryPoint.slice(i, i + 3), currentBuffGeometryPoint.slice(i + 6, i + 9)));
-  }
-  // 数组去重
-  const unique = (arr) => {
-    let obj = {};
-    return arr.reduce((item, next) => {
-      obj[next.x.toString() + next.y.toString()] ? '' : obj[next.x.toString() + next.y.toString()] = item.push(next);
-      return item;
-    }, []);
-  }
-  return unique(resultData);
 }
 
 /** 初始化模型三角面片几何拓扑关系 **/
