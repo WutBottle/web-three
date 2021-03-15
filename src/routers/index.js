@@ -24,5 +24,9 @@ export default new vueRouter({
     path: '/worker',
     name: 'WorkerPage',
     component: () => import('@components/WorkerPage/WorkerPage'),
+  }, {
+    path: '/admin',
+    name: 'AdminPage',
+    component: () => import('@components/AdminPage/AdminPage'),
   }]
 })

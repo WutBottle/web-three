@@ -788,7 +788,7 @@ function buildContourInfo(data) {
     distinguishMatrix[i] = []; // 初始化判别数组
     for (let j = 0; j < contourInfo.length; j++) {
       // 判断非自身轮廓且包含自身轮廓的数据，存入判别数组
-      if (j !== i && contourInfo[i].xMin > contourInfo[j].xMin && contourInfo[i].xMax < contourInfo[j].xMax && contourInfo[i].yMin > contourInfo[j].yMin && contourInfo[i].yMax < contourInfo[j].yMax) {
+      if (j !== i && contourInfo[i].xMin >= contourInfo[j].xMin && contourInfo[i].xMax <= contourInfo[j].xMax && contourInfo[i].yMin >= contourInfo[j].yMin && contourInfo[i].yMax <= contourInfo[j].yMax) {
         distinguishMatrix[i].push({
           index: j,
           xMin: contourInfo[j].xMin,
@@ -796,6 +796,7 @@ function buildContourInfo(data) {
       }
     }
   }
+  console.log(distinguishMatrix)
   // 对判别数组进行遍历，如果被包含轮廓数量为偶数则为外轮廓无需处理，如果为奇数则寻找最接近的父轮廓进行合并
   distinguishMatrix.forEach((item, index) => {
     // 为奇数则寻找最近的父轮廓
@@ -817,6 +818,8 @@ function buildContourInfo(data) {
   removeIndex.forEach(item => {
     contourInfo.splice(item, 1);
   })
+  console.log(contourInfo)
+
   return contourInfo;
 }
 

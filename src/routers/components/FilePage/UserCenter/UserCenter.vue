@@ -6,7 +6,7 @@
 
 <template>
   <div class="UserCenter">
-    <a-row :gutter="16">
+    <a-row>
       <a-col :span="16">
         <UserInfo :userData="userData" @updateFatherData="updateUserInfo"/>
       </a-col>

@@ -122,11 +122,16 @@ export default {
     handleSubmit() {
       api.tokensController.loginUser(this.loginForm).then(res => {
         if(res.data.success) {
-          this.$message.success('登录成功');
+          if(res.data.role === 'user') {
+            window.localStorage.setItem('nickname', res.data.nickname);
+            this.$router.push('/file');
+          }else if(res.data.role === 'admin'){
+            this.$router.push('/admin');
+          }
           window.localStorage.setItem('Access-Token', `Bearer ${res.data.Token}`);
           window.localStorage.setItem('username', res.data.username);
-          window.localStorage.setItem('nickname', res.data.nickname);
-          this.$router.push('/file');
+          window.localStorage.setItem('role', res.data.role);
+          this.$message.success('登录成功');
         }else {
           this.$message.error(res.data.message);
         }
