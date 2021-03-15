@@ -18,6 +18,8 @@ let controls = {}; // 创建控件对象
 let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
+// eslint-disable-next-line no-unused-vars
+let modalOffSet = {}; // 模型矫正中心位置偏移指数
 
 let currentGeometryPoint = []; // 当前模型三角面片数据
 let topologicalData = {}; // 拓扑重构后数据
@@ -279,6 +281,25 @@ export const computeSight = (data) => {
   return Math.floor(Math.max(...temp) * 1.1);
 }
 
+/**
+ * 设置加载模型居中
+ * {Group} Group 模型对象
+ */
+function setModelPosition(group) {
+  let box3 = new Three.Box3();
+  // 计算层级模型group的包围盒
+  // 模型group是加载一个三维模型返回的对象，包含多个网格模型
+  box3.expandByObject(group);
+  // 计算一个层级模型对应包围盒的几何体中心在世界坐标中的位置
+  let center = new Three.Vector3();
+  box3.getCenter(center);
+  // 重新设置模型的位置，使之居中。
+  group.position.x = group.position.x - center.x;
+  group.position.y = group.position.y - center.y;
+  group.position.z = group.position.z - center.z;
+  return group.position;
+}
+
 /** 绘制加载的STL文件
  * geometry: 几何体对象
  * name: 几何体名字
@@ -300,6 +321,7 @@ export const drawSTL = (geometry, name) => {
   let group = new Three.Group();
   group.name = '目标模型';
   group.add(mesh);
+  modalOffSet = setModelPosition(group); // 模型居中并且将模型偏移量赋值给modalOffSet
   scene.add(group); //网格模型添加到场景中
   drawGrid(initialSight);
   drawAxis(initialSight);
@@ -375,7 +397,7 @@ export const showHide = (name, val) => {
 
 /** 动画效果绘制线 **/
 export const animationDrawLine = () => {
-  if(pathPoints.length) {
+  if (pathPoints.length) {
     let sphereGeometry = new Three.SphereGeometry(0.5);
     let sphereMaterial = new Three.MeshBasicMaterial({
       color: 0x7777ff
@@ -386,7 +408,7 @@ export const animationDrawLine = () => {
     let curvePoints = [];
     pathPoints.forEach(item => {
       item.forEach(i => {
-        curvePoints.push(new  Three.Vector3(i.x, i.y, i.z))
+        curvePoints.push(new Three.Vector3(i.x, i.y, i.z))
       })
     })
     // 通过类CatmullRomCurve3创建一个3D样条曲线
@@ -426,7 +448,7 @@ export const animationDrawLine = () => {
       mixer.update(clock.getDelta());
     }
     render();
-  }else {
+  } else {
     Vue.prototype.$message.info('暂无轨迹数据!');
   }
 }
@@ -451,19 +473,23 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     const mesh = new Three.Mesh(plane, material)
     mesh.position.x = (boundingBox.max.x + boundingBox.min.x) / 2;
     mesh.position.y = (boundingBox.max.y + boundingBox.min.y) / 2;
-    mesh.position.z = startHeight + i * thick;
+    mesh.position.z = startHeight + i * thick - modalOffSet.z; // 添加偏移偏置量
     let group = new Three.Group();
-    group.add(mesh)
+    group.add(mesh);
     group.name = name + i;
     groupArray.add(group);
     layersData.push(startHeight + i * thick);
   }
+  // 把切片和轨迹的点全部偏移回中
+  groupArray.position.x = groupArray.position.x + modalOffSet.x;
+  groupArray.position.y = groupArray.position.y + modalOffSet.y;
+  groupArray.position.z = groupArray.position.z + modalOffSet.z;
   scene.add(groupArray);
   contourPoint = []; // 初始化轮廓点集合
   const createSliceLayer = (zArray) => {
     zArray.forEach((item, index) => {
       const groupName = name + index.toString();
-      const slicePointData = getHorizontalSlicePoints(item);
+      const slicePointData = getHorizontalSlicePoints(item - modalOffSet.z);
       contourPoint.push([]);
       slicePointData.map((item) => {
         item?.length && contourPoint[index].push(item);
@@ -476,7 +502,6 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
 }
 
 /** 根据点数组绘制点图形 **/
-// eslint-disable-next-line no-unused-vars
 const drawPointByPoints = (data, groupName, color) => {
   const geometry = new Three.Geometry();//声明一个空几何体对象
   data.forEach(item => {
@@ -745,7 +770,6 @@ function buildContourInfo(data) {
       }
     }
   }
-  console.log(distinguishMatrix)
   // 对判别数组进行遍历，如果被包含轮廓数量为偶数则为外轮廓无需处理，如果为奇数则寻找最接近的父轮廓进行合并
   distinguishMatrix.forEach((item, index) => {
     // 为奇数则寻找最近的父轮廓
@@ -764,11 +788,10 @@ function buildContourInfo(data) {
       removeIndex.push(fatherIndex)
     }
   })
+  removeIndex.sort((a, b) => b - a); // 从大到小移除数据而不是从小到大，这样位置就会被改变
   removeIndex.forEach(item => {
     contourInfo.splice(item, 1);
   })
-  console.log(contourInfo)
-
   return contourInfo;
 }
 
