@@ -363,7 +363,7 @@ export default {
     buildPath() {
       this.pathForm.validateFields((err, values) => {
         if (!err) {
-          removeObject('切片轨迹');
+          removeObject('切片轨迹'); // 移除切片轨迹
           createdPath({
             pathDensity: values.pathDensity,
             color: this.color,

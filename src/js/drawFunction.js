@@ -300,6 +300,16 @@ function setModelPosition(group) {
   return group.position;
 }
 
+/**
+ * 其他相对模型对象校准
+ * {Group, offSet} Group 模型对象, offSet偏移量
+ */
+function correctOffSet(object, offSet) {
+  object.position.x = object.position.x + offSet.x;
+  object.position.y = object.position.y + offSet.y;
+  object.position.z = object.position.z + offSet.z;
+}
+
 /** 绘制加载的STL文件
  * geometry: 几何体对象
  * name: 几何体名字
@@ -321,7 +331,7 @@ export const drawSTL = (geometry, name) => {
   let group = new Three.Group();
   group.name = '目标模型';
   group.add(mesh);
-  modalOffSet = setModelPosition(group); // 模型居中并且将模型偏移量赋值给modalOffSet
+  modalOffSet = setModelPosition(group); // 导入的模型可能坐标原点不在中心，所以需要居中显示且将偏移调整参数返回出来赋值给modalOffSet
   scene.add(group); //网格模型添加到场景中
   drawGrid(initialSight);
   drawAxis(initialSight);
@@ -471,19 +481,15 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
       transparent: true,
     })
     const mesh = new Three.Mesh(plane, material)
-    mesh.position.x = (boundingBox.max.x + boundingBox.min.x) / 2;
-    mesh.position.y = (boundingBox.max.y + boundingBox.min.y) / 2;
-    mesh.position.z = startHeight + i * thick - modalOffSet.z; // 添加偏移偏置量
+    mesh.position.x = (boundingBox.max.x + boundingBox.min.x) / 2 + modalOffSet.x; // 添加偏移参数
+    mesh.position.y = (boundingBox.max.y + boundingBox.min.y) / 2 + modalOffSet.y; // 添加偏移参数
+    mesh.position.z = startHeight + i * thick;
     let group = new Three.Group();
     group.add(mesh);
     group.name = name + i;
     groupArray.add(group);
     layersData.push(startHeight + i * thick);
   }
-  // 把切片和轨迹的点全部偏移回中
-  groupArray.position.x = groupArray.position.x + modalOffSet.x;
-  groupArray.position.y = groupArray.position.y + modalOffSet.y;
-  groupArray.position.z = groupArray.position.z + modalOffSet.z;
   scene.add(groupArray);
   contourPoint = []; // 初始化轮廓点集合
   const createSliceLayer = (zArray) => {
@@ -512,6 +518,7 @@ const drawPointByPoints = (data, groupName, color) => {
     size: 3
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
+  correctOffSet(points, modalOffSet); // 添加偏移修正
   findObjectByName(groupName).add(points);
   render();
 }
@@ -532,6 +539,7 @@ const drawLineByPoints = (data, name, color) => {
   });
   // Create the final object to add to the scene
   const lineObject = new Three.Line(geometry, material);
+  correctOffSet(lineObject, modalOffSet); // 添加偏移修正
   findObjectByName(name).add(lineObject);
   render();
 }
@@ -814,6 +822,7 @@ export const createdPath = ({pathDensity: density, color}) => {
   if (!contourPoint.length) {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
+    pathPoints = []; // 重置轨迹路径点
     contourPoint.forEach(item => {
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
       currentContourInfo.forEach(contourItem => {
@@ -866,6 +875,7 @@ function drawPathLineByPoints(data, name, color) {
     const lineObject = new Three.Line(geometry, material);
     group.add(lineObject);
   }
+  correctOffSet(group, modalOffSet); // 添加偏移修正
   scene.add(group);
   render();
 }
