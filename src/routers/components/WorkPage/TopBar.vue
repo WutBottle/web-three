@@ -186,27 +186,27 @@
     >
       <a-timeline>
         <a-timeline-item v-for="(item, index) in logData" :key="index">
-          {{item.action}}------{{moment(item.date).format('YYYY-MM-DD HH:mm:ss')}}
+          {{ item.action }}------{{ moment(item.date).format('YYYY-MM-DD HH:mm:ss') }}
         </a-timeline-item>
       </a-timeline>
     </a-drawer>
     <a-modal
-        title="轨迹生成"
-        v-model="pathVisible"
-        okText="确定"
-        cancelText="取消"
-        @ok="buildPath"
+      title="轨迹生成"
+      v-model="pathVisible"
+      okText="确定"
+      cancelText="取消"
+      @ok="buildPath"
     >
       <a-form :form="pathForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
         <a-form-item label="轨迹密度">
           <a-input
-              placeholder="请输入轨迹密度"
-              v-decorator="['pathDensity', { rules: [{ required: true, message: '请输入轨迹密度!' }] }]"
+            placeholder="请输入轨迹密度"
+            v-decorator="['pathDensity', { rules: [{ required: true, message: '请输入轨迹密度!' }] }]"
           />
         </a-form-item>
         <a-form-item label="绘制颜色">
           <colorPicker
-              v-model="color"
+            v-model="color"
           />
         </a-form-item>
       </a-form>
@@ -364,12 +364,15 @@ export default {
       this.pathForm.validateFields((err, values) => {
         if (!err) {
           removeObject('切片轨迹'); // 移除切片轨迹
+          const start = window.performance.now();
           createdPath({
             pathDensity: values.pathDensity,
             color: this.color,
           });
+          const end = window.performance.now();
+          const time = Math.round(end - start);
           this.addData({
-            action: '路径生成完毕，切片密度为:' + values.pathDensity,
+            action: '路径生成完毕，切片密度为:' + values.pathDensity + '，耗时：' + time + 'ms',
             date: new Date(),
           });
           this.pathVisible = false;
