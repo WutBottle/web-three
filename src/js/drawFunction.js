@@ -785,15 +785,11 @@ function buildContourInfo(data) {
       item.sort((a, b) => b.xMin - a.xMin); // 将最接近的轮廓排序到最前面
       let fatherIndex = item[0].index;
       // 合并轮廓
-      contourInfo[index] = {
-        xMin: contourInfo[fatherIndex].xMin,
-        xMax: contourInfo[fatherIndex].xMax,
-        yMin: contourInfo[fatherIndex].yMin,
-        yMax: contourInfo[fatherIndex].yMax,
+      Object.assign(contourInfo[fatherIndex], {
         edgeInfo: contourInfo[index].edgeInfo.concat(contourInfo[fatherIndex].edgeInfo),
-      }
+      })
       // 存储需要被移除的轮廓索引
-      removeIndex.push(fatherIndex)
+      removeIndex.push(index)
     }
   })
   removeIndex.sort((a, b) => b - a); // 从大到小移除数据而不是从小到大，这样位置就会被改变
