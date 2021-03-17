@@ -828,25 +828,23 @@ export const createdPath = ({pathDensity: density, color}) => {
           let intersectData = contourItem.edgeInfo.filter(item => item.yMin <= yHeight && yHeight <= item.yMax); // 与当前扫描线相交线段数据
           let intersectPoints = []; // 交点个数
           for (let i = 0; i < intersectData.length;) {
+            // 交点分为三种情况，在边最高点则存入1个，在两边顶上则存入0个，在边最低点则存入2个
             if (intersectData[i].yMin < yHeight && yHeight < intersectData[i].yMax) {
               intersectPoints.push(unitCalXY(intersectData[i].startPoint, intersectData[i].endPoint, yHeight));
               i++;
             } else if (i < intersectData.length - 1 && intersectData[i].yMin === intersectData[i + 1].yMin && yHeight === intersectData[i].yMin) {
-              intersectPoints.push(intersectData[i].startPoint.y - intersectData[i].endPoint.y ? intersectData[i].endPoint : intersectData[i].startPoint);
+              let intersectionPoint = intersectData[i].startPoint.y - intersectData[i].endPoint.y ? intersectData[i].endPoint : intersectData[i].startPoint;
+              intersectPoints.push(intersectionPoint);
+              intersectPoints.push(intersectionPoint);
               i += 2;
             } else {
               i += 2;
             }
           }
           intersectPoints.sort((a, b) => a.x - b.x); // 按照x坐标排序
-          if (oddEven(intersectPoints.length)) {
-            for (let i = 0; i < intersectPoints.length; i += 2) {
-              pathPoints.push([intersectPoints[i], intersectPoints[i + 1]])
-            }
-          } else {
-            for (let i = 0; i < intersectPoints.length - 1; i++) {
-              pathPoints.push([intersectPoints[i], intersectPoints[i + 1]])
-            }
+          // 按照A-B、C-D、E-F格式连接
+          for (let i = 0; i < intersectPoints.length; i += 2) {
+            pathPoints.push([intersectPoints[i], intersectPoints[i + 1]])
           }
         }
       })
