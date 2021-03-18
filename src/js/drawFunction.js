@@ -18,7 +18,6 @@ let controls = {}; // 创建控件对象
 let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
-// eslint-disable-next-line no-unused-vars
 let modalOffSet = {}; // 模型矫正中心位置偏移指数
 
 let currentGeometryPoint = []; // 当前模型三角面片数据
@@ -818,7 +817,6 @@ export const createdPath = ({pathDensity: density, color}) => {
   if (!contourPoint.length) {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
-    pathPoints = []; // 重置轨迹路径点
     contourPoint.forEach(item => {
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
       currentContourInfo.forEach(contourItem => {
@@ -873,3 +871,25 @@ function drawPathLineByPoints(data, name, color) {
   scene.add(group);
   render();
 }
+
+/**
+ * 生成G代码
+ * **/
+export const splicingGCode = () => {
+  return new Promise((resolve, reject) => {
+    let startPart = 'G21;\nG90;\nM104 S205;\nG28;\nG1 Z5 F5000 E1;\nM109 S205;\nG92 E0;\nM82;\n'; // 头部G代码
+    let endPart = 'G92 E0;\nM104 S0;\nM140 S0;\nG28 X0 Y0 Z0;\nM84;'; // 尾部G代码
+    if(!pathPoints.length) {
+      reject('暂无轨迹数据');
+    }else {
+      let operationPart = ''; // 执行G代码
+      let E = 1; // 送丝长度
+      pathPoints.forEach(item => {
+        operationPart += 'G0 X' + item[0].x.toFixed(4) + ' Y' + item[0].y.toFixed(4) + ' Z' + item[0].z.toFixed(4) + ' F7800.00;\n';
+        operationPart += 'G1 X' + item[1].x.toFixed(4) + ' Y' + item[1].y.toFixed(4) + ' Z' + item[1].z.toFixed(4) + ' E' + E++ + ' F1080.00;\n';
+      })
+      resolve(startPart + operationPart + endPart);
+    }
+  })
+}
+

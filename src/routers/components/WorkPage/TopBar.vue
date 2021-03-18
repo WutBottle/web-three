@@ -25,6 +25,14 @@
       }
     }
   }
+
+
+}
+
+.g-code-button {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0;
 }
 </style>
 
@@ -74,6 +82,9 @@
           </a-menu-item>
           <a-menu-item key="path" @click="() => this.pathVisible = true">
             轨迹生成
+          </a-menu-item>
+          <a-menu-item key="gCode" @click="() => this.GCodeVisible = true">
+            G代码
           </a-menu-item>
           <a-menu-item key="animation" @click="playAnimation">
             动画
@@ -211,6 +222,26 @@
         </a-form-item>
       </a-form>
     </a-modal>
+    <a-drawer
+      title="GCode"
+      placement="right"
+      :visible="GCodeVisible"
+      :mask="false"
+      width="400"
+      @close="() => this.GCodeVisible = false"
+    >
+      <a-spin tip="G代码生成中" :spinning="gSpinning">
+        <a-textarea placeholder="G代码编辑区域" v-model="gCode" :rows="18"/>
+      </a-spin>
+      <div class="g-code-button">
+        <a-button type="primary" @click="createG">
+          生成G代码
+        </a-button>
+        <a-button type="primary" :disabled="!gCode" @click="downloadGCode">
+          下载G代码
+        </a-button>
+      </div>
+    </a-drawer>
   </div>
 </template>
 
@@ -227,7 +258,8 @@ import {
   render,
   getScene,
   createdPath,
-  animationDrawLine
+  animationDrawLine,
+  splicingGCode
 } from '@js/drawFunction';
 
 export default {
@@ -269,6 +301,9 @@ export default {
       treeData: [], // 图层数据
       recordVisible: false, // 日志面板控制
       pathVisible: false, // 轨迹参数弹窗控制
+      GCodeVisible: false, // G代码弹窗控制
+      gCode: '', // g代码结果
+      gSpinning: false, // g代码生成中控制
     }
   },
   // 页面后退后清除数据
@@ -378,6 +413,34 @@ export default {
           this.pathVisible = false;
         }
       })
+    },
+    // 生成G代码
+    createG() {
+      this.gSpinning = true;
+      splicingGCode().then(val => {
+        this.gCode = val;
+        this.gSpinning = false;
+      }).catch(err => {
+        this.$message.info(err);
+        this.gSpinning = false;
+      });
+    },
+    // 下载G代码
+    downloadGCode() {
+      //定义文件内容，类型必须为Blob 否则createObjectURL会报错
+      let content = new Blob([this.gCode]);
+      //生成url对象
+      let urlObject = window.URL || window.webkitURL || window
+      let url = urlObject.createObjectURL(content)
+      //生成<a></a>DOM元素
+      let el = document.createElement('a')
+      //链接赋值
+      el.href = url
+      el.download = 'G代码.txt'
+      //必须点击否则不会下载
+      el.click()
+      //移除链接释放资源
+      urlObject.revokeObjectURL(url)
     }
   }
 }
