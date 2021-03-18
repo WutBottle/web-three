@@ -139,43 +139,43 @@
             </a-form-item>
           </a-form>
         </a-tab-pane>
-        <a-tab-pane key="cone">
-          <span slot="tab">
-            <i class="iconfont icon-cone"></i>
-            锥面切片
-          </span>
-          <a-form :form="coneForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">
-            <a-form-item label="起始切片半径">
-              <a-input
-                placeholder="输入起始切片半径"
-                v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"
-              />
-            </a-form-item>
-            <a-form-item label="起始切片高度">
-              <a-input
-                placeholder="输入起始切片高度"
-                v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"
-              />
-            </a-form-item>
-            <a-form-item label="终止切片高度">
-              <a-input
-                placeholder="输入终止切片高度"
-                v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"
-              />
-            </a-form-item>
-            <a-form-item label="层厚">
-              <a-input
-                placeholder="输入层厚"
-                v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"
-              />
-            </a-form-item>
-            <a-form-item label="绘制颜色">
-              <colorPicker
-                v-model="color"
-              />
-            </a-form-item>
-          </a-form>
-        </a-tab-pane>
+<!--        <a-tab-pane key="cone">-->
+<!--          <span slot="tab">-->
+<!--            <i class="iconfont icon-cone"></i>-->
+<!--            锥面切片-->
+<!--          </span>-->
+<!--          <a-form :form="coneForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 12 }">-->
+<!--            <a-form-item label="起始切片半径">-->
+<!--              <a-input-->
+<!--                placeholder="输入起始切片半径"-->
+<!--                v-decorator="['startRadius', { rules: [{ required: true, message: '输入起始切片半径!' }] }]"-->
+<!--              />-->
+<!--            </a-form-item>-->
+<!--            <a-form-item label="起始切片高度">-->
+<!--              <a-input-->
+<!--                placeholder="输入起始切片高度"-->
+<!--                v-decorator="['startHeight', { rules: [{ required: true, message: '输入起始切片高度!' }] }]"-->
+<!--              />-->
+<!--            </a-form-item>-->
+<!--            <a-form-item label="终止切片高度">-->
+<!--              <a-input-->
+<!--                placeholder="输入终止切片高度"-->
+<!--                v-decorator="['endHeight', { rules: [{ required: true, message: '输入终止切片高度!' }] }]"-->
+<!--              />-->
+<!--            </a-form-item>-->
+<!--            <a-form-item label="层厚">-->
+<!--              <a-input-->
+<!--                placeholder="输入层厚"-->
+<!--                v-decorator="['sliceThick', { rules: [{ required: true, message: '输入层厚!' }] }]"-->
+<!--              />-->
+<!--            </a-form-item>-->
+<!--            <a-form-item label="绘制颜色">-->
+<!--              <colorPicker-->
+<!--                v-model="color"-->
+<!--              />-->
+<!--            </a-form-item>-->
+<!--          </a-form>-->
+<!--        </a-tab-pane>-->
       </a-tabs>
     </a-modal>
     <a-drawer
