@@ -18,7 +18,7 @@ const tokensController = {
   },
   // 注册用户
   registerUser(params) {
-    return axios.post(`${baseUrl.tokensController}/register`, params)
+    return axios.post(`${baseUrl.tokensController}/register`, params);
   },
   // 获取用户基本信息
   getUserInfo(params) {
@@ -26,8 +26,12 @@ const tokensController = {
   },
   // 修改用户信息
   updateUserInfo(params) {
-    return axios.post(`${baseUrl.tokensController}/updateUserInfo`, params)
+    return axios.post(`${baseUrl.tokensController}/updateUserInfo`, params);
   },
+  // 根据username查询用户列表
+  getUserList(params) {
+    return axios.post(`${baseUrl.tokensController}/userList`, params);
+  }
 };
 
 export default tokensController;
