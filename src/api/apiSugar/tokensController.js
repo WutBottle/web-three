@@ -31,7 +31,11 @@ const tokensController = {
   // 根据username查询用户列表
   getUserList(params) {
     return axios.post(`${baseUrl.tokensController}/userList`, params);
-  }
+  },
+  // 删除用户
+  deleteUser(params) {
+    return axios.post(`${baseUrl.tokensController}/deleteUser`, params);
+  },
 };
 
 export default tokensController;

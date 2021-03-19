@@ -36,9 +36,12 @@
             <a-button slot="actions" type="primary" @click="showUserInfo(item)">
               修改
             </a-button>
-            <a-button slot="actions" type="danger">
-              删除
-            </a-button>
+            <a-popconfirm slot="actions" title="确定删除该用户？" okText="确定" cancelText="取消" @confirm="handleDelete(item._id)">
+              <a-icon slot="icon" type="question-circle-o" style="color: red" />
+              <a-button type="danger">
+                删除
+              </a-button>
+            </a-popconfirm>
             <a-list-item-meta
               :description="item.nickname + ' ' + item.age + ' ' + item.company + ' ' + item.major + ' ' + moment(item.date).format('YYYY-MM-DD HH:mm:ss')"
             >
@@ -162,13 +165,26 @@ export default {
           name: this.searchVal,
         }).then(res => {
           if (res.data.success) {
-            resolve(res.data.message)
+            resolve(res.data.message);
             this.data = res.data.data;
           } else {
-            reject(res.data.message)
+            reject(res.data.message);
           }
         })
       }))
+    },
+    // 删除用户
+    handleDelete(id) {
+      api.tokensController.deleteUser({
+        id,
+      }).then(res => {
+        if (res.data.success) {
+         this.$message.success(res.data.message);
+         this.refreshUserList();
+        } else {
+          this.$message.error(res.data.message);
+        }
+      })
     }
   }
 }
