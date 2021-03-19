@@ -33,7 +33,7 @@
       <div class="list-wrapper">
         <a-list item-layout="horizontal" :data-source="data">
           <a-list-item slot="renderItem" slot-scope="item">
-            <a-button slot="actions" type="primary">
+            <a-button slot="actions" type="primary" @click="showUserInfo(item)">
               修改
             </a-button>
             <a-button slot="actions" type="danger">
@@ -51,6 +51,61 @@
         </a-list>
       </div>
     </a-row>
+    <a-modal
+      title="修改用户资料"
+      :visible="editVisible"
+      okText="确定"
+      cancelText="取消"
+      @ok="handleOk"
+      @cancel="() => this.editVisible = false"
+    >
+      <a-form :form="form" :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }">
+        <a-form-item label="真实姓名">
+          <a-input
+            v-decorator="['nickname', {
+              rules: [{ required: true, message: '请输入真实姓名!' }],
+              initialValue: currentUserData.nickname
+            }]"
+            placeholder="请输入真实姓名"
+          />
+        </a-form-item>
+        <a-form-item label="密码">
+          <a-input
+            type="password"
+            v-decorator="['note', {
+              rules: [{ required: true, message: '请输入密码!' }],
+              initialValue: currentUserData.password
+            }]"
+            placeholder="请输入密码"
+          />
+        </a-form-item>
+        <a-form-item label="年龄">
+          <a-input-number
+            :min="0"
+            v-decorator="['age', {
+              initialValue: currentUserData.age
+            }]"
+            placeholder="年龄"
+          />
+        </a-form-item>
+        <a-form-item label="单位">
+          <a-input
+            v-decorator="['company', {
+              initialValue: currentUserData.company
+            }]"
+            placeholder="请输入单位"
+          />
+        </a-form-item>
+        <a-form-item label="专业方向">
+          <a-input
+            v-decorator="['major', {
+              initialValue: currentUserData.major
+            }]"
+            placeholder="请输入专业方向"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -64,26 +119,57 @@ export default {
     return {
       moment,
       searchVal: '', // 搜索用户名
-      data: []
+      data: [],
+      editVisible: false, // 编辑弹窗控制
+      currentUserData: {}, // 当前用户信息
+      formLayout: 'horizontal',
+      form: this.$form.createForm(this, {name: 'form'}),
     }
   },
   mounted() {
-    this.onSearch();
+    this.refreshUserList();
   },
   methods: {
     // 获取用户列表
     onSearch() {
-      api.tokensController.getUserList({
-        name: this.searchVal,
-      }).then(res => {
-        if (res.data.success) {
-          this.$message.success(res.data.message);
-          this.data = res.data.data;
-        } else {
-          this.$message.error(res.data.message);
-        }
-      })
+      this.refreshUserList().then(res => {
+        this.$message.success(res);
+      }).catch(err => {
+        this.$message.error(err);
+      });
     },
+    showUserInfo(item) {
+      this.editVisible = true;
+      this.currentUserData = item;
+    },
+    handleOk() {
+      this.form.validateFields((err, values) => {
+        if (!err) {
+          api.tokensController.updateUserInfo(values).then(res => {
+            if (res.data.success) {
+              this.editVisible = false;
+              this.refreshUserList();
+            }
+            this.$message.success(res.data.message);
+          })
+        }
+      });
+    },
+    // 封装异步函数获取用户列表数据
+    refreshUserList() {
+      return new Promise(((resolve, reject) => {
+        api.tokensController.getUserList({
+          name: this.searchVal,
+        }).then(res => {
+          if (res.data.success) {
+            resolve(res.data.message)
+            this.data = res.data.data;
+          } else {
+            reject(res.data.message)
+          }
+        })
+      }))
+    }
   }
 }
 </script>
