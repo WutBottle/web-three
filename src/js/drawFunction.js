@@ -247,7 +247,7 @@ export const resetModel = () => {
  * data: 包络盒数据
  * **/
 export const createSurroundBox = (data) => {
-  let ballGeometry = new Three.SphereGeometry(Math.abs(data.max.x - data.min.x) * 0.05, 40, 40);
+  let ballGeometry = new Three.SphereGeometry(Math.abs(data.max.x - data.min.x) * 0.05, 20, 20);
   let ballMaterial = new Three.MeshLambertMaterial({
     color: 0xffff00
   });
@@ -260,6 +260,7 @@ export const createSurroundBox = (data) => {
   group.add(helper, ballMesh);
   group.name = '包络盒';
   group.visible = false;
+  correctOffSet(group, modalOffSet);
   scene.add(group);
   drawText('这是包络盒', {
     fontsize: 30,
@@ -318,7 +319,6 @@ export const drawSTL = (geometry, name) => {
   geometry.computeBoundingBox();
   currentGeometryPoint = new Three.Geometry().fromBufferGeometry(geometry).clone();
   boundingBox = geometry.boundingBox;
-  createSurroundBox(boundingBox);
   initialSight = computeSight(boundingBox);
   let material = new Three.MeshLambertMaterial({
     color: 0x36d5d5,
@@ -331,6 +331,7 @@ export const drawSTL = (geometry, name) => {
   group.name = '目标模型';
   group.add(mesh);
   modalOffSet = setModelPosition(group); // 导入的模型可能坐标原点不在中心，所以需要居中显示且将偏移调整参数返回出来赋值给modalOffSet
+  createSurroundBox(boundingBox); // 生成包络盒
   scene.add(group); //网格模型添加到场景中
   drawGrid(initialSight);
   drawAxis(initialSight);
