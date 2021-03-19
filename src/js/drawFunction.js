@@ -505,6 +505,7 @@ export const makeHorizontalSlice = (name, horizontalParams) => {
     })
   }
   createSliceLayer(layersData);
+  pathPoints = []; // 切片计算完毕后需要清除上一步的轨迹数据
 }
 
 /** 根据点数组绘制点图形 **/
@@ -818,6 +819,7 @@ export const createdPath = ({pathDensity: density, color}) => {
   if (!contourPoint.length) {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
+    pathPoints = []; // 重置轨迹数据
     contourPoint.forEach(item => {
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
       currentContourInfo.forEach(contourItem => {
