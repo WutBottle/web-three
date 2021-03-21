@@ -44,15 +44,15 @@
           <button>文件</button>
         </a>
         <a-menu slot="overlay">
-          <a-sub-menu key="sub1">
-            <span slot="title">
-              <a-icon type="cloud-upload"/>
-              <span>在线发布</span>
-            </span>
-            <a-menu-item key="publishMyDepository">
-              我的仓库
-            </a-menu-item>
-          </a-sub-menu>
+<!--          <a-sub-menu key="sub1">-->
+<!--            <span slot="title">-->
+<!--              <a-icon type="cloud-upload"/>-->
+<!--              <span>在线发布</span>-->
+<!--            </span>-->
+<!--            <a-menu-item key="publishMyDepository">-->
+<!--              我的仓库-->
+<!--            </a-menu-item>-->
+<!--          </a-sub-menu>-->
           <a-sub-menu key="sub2">
             <span slot="title">
               <a-icon type="save"/>
@@ -69,8 +69,8 @@
           </a-menu-item>
         </a-menu>
       </a-dropdown>
-      <button>编辑</button>
-      <button>图像</button>
+<!--      <button>编辑</button>-->
+<!--      <button>图像</button>-->
       <button @click="showComponentsDrawer">图层</button>
       <a-dropdown :trigger="['click']">
         <a class="ant-dropdown-link" @click="e => e.preventDefault()">

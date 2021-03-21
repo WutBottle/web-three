@@ -51,24 +51,24 @@
         </template>
         <i class="icon-wrapper iconfont icon-narrow" @click="handleNarrow"></i>
       </a-tooltip>
-      <a-tooltip placement="right">
-        <template slot="title">
-          <span>显/隐坐标轴</span>
-        </template>
-        <i class="icon-wrapper iconfont icon-axis" @click="showHide('centerAxis')"></i>
-      </a-tooltip>
-      <a-tooltip placement="right">
-        <template slot="title">
-          <span>显/隐底部网格</span>
-        </template>
-        <i class="icon-wrapper iconfont icon-grid" @click="showHide('bottomGrid')"></i>
-      </a-tooltip>
-      <a-tooltip placement="right">
-        <template slot="title">
-          <span>显/隐包络盒</span>
-        </template>
-        <i class="icon-wrapper iconfont icon-box" @click="showHide('surroundBox')"></i>
-      </a-tooltip>
+<!--      <a-tooltip placement="right">-->
+<!--        <template slot="title">-->
+<!--          <span>显/隐坐标轴</span>-->
+<!--        </template>-->
+<!--        <i class="icon-wrapper iconfont icon-axis" @click="showHide('centerAxis')"></i>-->
+<!--      </a-tooltip>-->
+<!--      <a-tooltip placement="right">-->
+<!--        <template slot="title">-->
+<!--          <span>显/隐底部网格</span>-->
+<!--        </template>-->
+<!--        <i class="icon-wrapper iconfont icon-grid" @click="showHide('bottomGrid')"></i>-->
+<!--      </a-tooltip>-->
+<!--      <a-tooltip placement="right">-->
+<!--        <template slot="title">-->
+<!--          <span>显/隐包络盒</span>-->
+<!--        </template>-->
+<!--        <i class="icon-wrapper iconfont icon-box" @click="showHide('surroundBox')"></i>-->
+<!--      </a-tooltip>-->
     </div>
   </div>
 </template>
