@@ -1,5 +1,5 @@
-import Vue from 'vue'
-import vueRouter from 'vue-router'
+import Vue from 'vue';
+import vueRouter from 'vue-router';
 
 Vue.use(vueRouter);
 
@@ -20,10 +20,6 @@ export default new vueRouter({
     path: '/file',
     name: 'FilePage',
     component: () => import('@components/FilePage/FilePage'),
-  }, {
-    path: '/worker',
-    name: 'WorkerPage',
-    component: () => import('@components/WorkerPage/WorkerPage'),
   }, {
     path: '/admin',
     name: 'AdminPage',

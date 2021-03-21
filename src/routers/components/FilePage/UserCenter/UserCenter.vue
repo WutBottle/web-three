@@ -12,9 +12,7 @@
       </a-col>
       <a-col :span="8">
         <a-card title="消息列表" :bordered="false">
-          <p>card content</p>
-          <p>card content</p>
-          <p>card content</p>
+
         </a-card>
       </a-col>
     </a-row>
