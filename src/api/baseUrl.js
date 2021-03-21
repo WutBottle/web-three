@@ -10,7 +10,6 @@ const distributeUrl = {
   serverBaseController: serverBaseUrl,
   tokensController: serverBaseUrl + 'tokens',
   modelController: serverBaseUrl + 'model',
-  workerController: serverBaseUrl + 'workerHandler',
 };
 
 export default distributeUrl;
