@@ -208,7 +208,7 @@ export default {
       this.traverseScene(getScene().children, this.treeData, ''); // 遍历scene进行控制
     },
     loaderSTL(fileUrl) {
-      this.resetData();
+      this.resetData(); // 重置日志
       removeGroup();
       this.loading = true;
       let loader = new STLLoader();

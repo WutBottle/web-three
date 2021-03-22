@@ -78,7 +78,7 @@
         </a>
         <a-menu slot="overlay">
           <a-menu-item key="slice" @click="() => this.sliceFormVisible = true">
-            切片
+            分层切片
           </a-menu-item>
           <a-menu-item key="path" @click="() => this.pathVisible = true">
             轨迹生成
