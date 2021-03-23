@@ -413,8 +413,8 @@ export const animationDrawLine = () => {
       color: 0x7777ff
     }); //材质对象
     let sphere = new Three.Mesh(sphereGeometry, sphereMaterial);
-    scene.add(sphere);
-    sphere.position.set(-10, -50, -50)
+    scene.add(sphere); // 标记球体加入场景
+    sphere.position.set(-10, -50, -50); // 设置标记球体初始位置
     let curvePoints = [];
     pathPoints.forEach(item => {
       item.forEach(i => {
@@ -445,10 +445,10 @@ export const animationDrawLine = () => {
     let posTrack = new Three.KeyframeTrack('.position', times, values);
     let duration = curvePointsLen;
     let clip = new Three.AnimationClip("default", duration, [posTrack]);
-    let mixer = new Three.AnimationMixer(sphere);
-    let AnimationAction = mixer.clipAction(clip);
-    AnimationAction.timeScale = 8;
-    AnimationAction.play();
+    let mixer = new Three.AnimationMixer(sphere); // 绑定球体与曲线轨迹
+    let AnimationAction = mixer.clipAction(clip); // 实例化动画操作
+    AnimationAction.timeScale = 8; // 动画播放速度
+    AnimationAction.play(); // 执行动画
 
     let clock = new Three.Clock();//声明一个时钟对象
     const render = () => {

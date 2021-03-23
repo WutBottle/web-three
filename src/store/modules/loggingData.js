@@ -8,11 +8,11 @@ const state = {
 };
 
 const mutations = {
-  // 添加新日志
+  // 添加新日志记录
   addData(state, data) {
     state.logData.push(data);
   },
-  // 重置日志
+  // 重置日志记录
   resetData(state) {
     state.logData = [];
   }
