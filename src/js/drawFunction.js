@@ -408,7 +408,7 @@ export const showHide = (name, val) => {
 /** 动画效果绘制线 **/
 export const animationDrawLine = () => {
   if (pathPoints.length) {
-    let sphereGeometry = new Three.SphereGeometry(0.5);
+    let sphereGeometry = new Three.SphereGeometry(2);
     let sphereMaterial = new Three.MeshBasicMaterial({
       color: 0x7777ff
     }); //材质对象
@@ -418,7 +418,7 @@ export const animationDrawLine = () => {
     let curvePoints = [];
     pathPoints.forEach(item => {
       item.forEach(i => {
-        curvePoints.push(new Three.Vector3(i.x, i.y, i.z))
+        curvePoints.push(new Three.Vector3(i.x + modalOffSet.x, i.y + modalOffSet.y, i.z + modalOffSet.z))
       })
     })
     // 通过类CatmullRomCurve3创建一个3D样条曲线
