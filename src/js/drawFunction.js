@@ -820,7 +820,9 @@ export const createdPath = ({pathDensity: density, color}) => {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
     pathPoints = []; // 重置轨迹数据
+    let contourNum = 0;
     contourPoint.forEach(item => {
+      contourNum += item.length;
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
       currentContourInfo.forEach(contourItem => {
         let startY = contourItem.yMax; // 扫描线初始高度
@@ -850,6 +852,7 @@ export const createdPath = ({pathDensity: density, color}) => {
         }
       })
     })
+    console.log(contourNum);
     drawPathLineByPoints(pathPoints, '切片轨迹', color);
   }
 }
