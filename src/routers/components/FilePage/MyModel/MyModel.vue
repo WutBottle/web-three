@@ -177,7 +177,7 @@
         </a-form-item>
       </a-form>
     </a-modal>
-    <a-modal v-model="updateVisible" title="上传模型" okText="确认" cancelText="取消" @ok="handleUpload('update')"
+    <a-modal v-model="updateVisible" title="修改模型" okText="确认" cancelText="取消" @ok="handleUpload('update')"
              :afterClose="() => this.clearModalData('updateForm')">
       <a-form :form="updateForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
         <a-form-item label="模型名称">

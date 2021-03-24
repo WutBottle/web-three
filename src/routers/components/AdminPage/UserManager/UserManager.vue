@@ -25,7 +25,7 @@
   <div class="UserManager">
     <a-row>
       <a-col :span="10">
-        <a-input-search v-model="searchVal" placeholder="请输入用户名" enter-button @search="onSearch"/>
+        <a-input-search v-model="searchVal" placeholder="请输入用户名或真实姓名" enter-button @search="onSearch"/>
       </a-col>
       <a-col :span="14"></a-col>
     </a-row>
@@ -148,10 +148,15 @@ export default {
     handleOk() {
       this.form.validateFields((err, values) => {
         if (!err) {
-          api.tokensController.updateUserInfo(values).then(res => {
+          const params = {
+            id: this.currentUserData._id,
+            ...values,
+          }
+          api.tokensController.updateUserInfo(params).then(res => {
             if (res.data.success) {
               this.editVisible = false;
               this.refreshUserList();
+              this.form.resetFields();
             }
             this.$message.success(res.data.message);
           })

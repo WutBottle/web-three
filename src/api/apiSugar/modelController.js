@@ -32,6 +32,10 @@ const modelController = {
   removeUsableModel(params) {
     return axios.post(`${baseUrl.modelController}/removeUsableModel`, params);
   },
+  // 根据关键词查询模型数据
+  getModelListByName(params) {
+    return axios.get(`${baseUrl.modelController}/getModalListByName`, {params});
+  },
 };
 
 export default modelController;
