@@ -1,7 +1,7 @@
 import Vue from 'vue';
-import Antd from 'ant-design-vue';
-import 'ant-design-vue/dist/antd.css';
-Vue.use(Antd);
+import Antd from 'ant-design-vue'; // 打包需注释的代码
+import 'ant-design-vue/dist/antd.css'; // 打包需注释的代码
+Vue.use(Antd); // 打包需注释的代码
 Vue.config.productionTip = false;
 import App from './App.vue';
 import routers from './routers';
