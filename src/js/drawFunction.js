@@ -6,7 +6,6 @@ import Vue from "_vue@2.6.12@vue";
 
 const leftNum = 40; // 页面左侧菜单栏宽度
 const topNum = 29; // 页面顶部菜单栏高度
-let boundingBox = {}; // 包络盒信息
 let scene = new Three.Scene(); // 场景对象
 let camera = null; // 相机对象
 let renderer = new Three.WebGLRenderer(); // 创建渲染器对象
@@ -15,11 +14,12 @@ let height = window.innerHeight - topNum; // 窗口高度
 let k = null; // 窗口宽高比
 let s = null; // 三维场景显示范围控制系数，系数越大，显示的范围越大
 let controls = {}; // 创建控件对象
+
 let gridGroup = null; // 网格组
 let axisGroup = null; // 中心坐标组
 let initialSight = null; // 初始化模型视野
 let modalOffSet = {}; // 模型矫正中心位置偏移指数
-
+let boundingBox = {}; // 包络盒信息
 let currentGeometryPoint = []; // 当前模型三角面片数据
 let topologicalData = {}; // 拓扑重构后数据
 let contourPoint = []; // 模型切片轮廓数据
@@ -129,6 +129,15 @@ export const removeAll = () => {
   for (let i = allChildren.length - 1; i >= 0; i--) {
     scene.remove(allChildren[i]);
   }
+  gridGroup = null; // 网格组
+  axisGroup = null; // 中心坐标组
+  initialSight = null; // 初始化模型视野
+  modalOffSet = {}; // 模型矫正中心位置偏移指数
+  boundingBox = {}; // 包络盒信息
+  currentGeometryPoint = []; // 当前模型三角面片数据
+  topologicalData = {}; // 拓扑重构后数据
+  contourPoint = []; // 模型切片轮廓数据
+  pathPoints = []; // 轨迹规划路径数据
 }
 
 /** 绘制底部网格
@@ -885,9 +894,9 @@ export const splicingGCode = () => {
   return new Promise((resolve, reject) => {
     let startPart = 'G21;\nG90;\nM104 S205;\nG28;\nG1 Z5 F5000 E1;\nM109 S205;\nG92 E0;\nM82;\n'; // 头部G代码
     let endPart = 'G92 E0;\nM104 S0;\nM140 S0;\nG28 X0 Y0 Z0;\nM84;'; // 尾部G代码
-    if(!pathPoints.length) {
+    if (!pathPoints.length) {
       reject('暂无轨迹数据');
-    }else {
+    } else {
       let operationPart = ''; // 执行G代码
       let E = 1; // 送丝长度
       pathPoints.forEach(item => {
@@ -897,5 +906,27 @@ export const splicingGCode = () => {
       resolve(startPart + operationPart + endPart);
     }
   })
+}
+
+/** 绘制加载的PCD文件
+ * points: pcd文件点
+ * name: 几何体名字
+ * **/
+export const drawPCD = (points, name) => {
+  // 加载完成后会返回一个几何体对象BufferGeometry，你可以通过Mesh、Points等方式渲染该几何体
+  points.geometry.computeBoundingBox();
+  boundingBox = points.geometry.boundingBox;
+  initialSight = computeSight(boundingBox);
+  points.material.size = 0.5;
+  points.material.color = new Three.Color(0xffffff);
+  let group = new Three.Group();
+  group.add(points);
+  group.name = name;
+  modalOffSet = setModelPosition(group); // 导入的模型可能坐标原点不在中心，所以需要居中显示且将偏移调整参数返回出来赋值给modalOffSet
+  createSurroundBox(boundingBox); // 生成包络盒
+  scene.add(group); //网格模型添加到场景中
+  drawGrid(initialSight);
+  drawAxis(initialSight);
+  resetModel();
 }
 

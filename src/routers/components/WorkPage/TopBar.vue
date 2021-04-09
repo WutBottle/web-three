@@ -44,15 +44,15 @@
           <button>文件</button>
         </a>
         <a-menu slot="overlay">
-<!--          <a-sub-menu key="sub1">-->
-<!--            <span slot="title">-->
-<!--              <a-icon type="cloud-upload"/>-->
-<!--              <span>在线发布</span>-->
-<!--            </span>-->
-<!--            <a-menu-item key="publishMyDepository">-->
-<!--              我的仓库-->
-<!--            </a-menu-item>-->
-<!--          </a-sub-menu>-->
+          <a-sub-menu key="sub1">
+            <span slot="title">
+              <a-icon type="cloud-upload"/>
+              <span>加载模型</span>
+            </span>
+            <a-menu-item key="sub-PCD" @click="selectPCDFile">
+              PCD
+            </a-menu-item>
+          </a-sub-menu>
           <a-sub-menu key="sub2">
             <span slot="title">
               <a-icon type="save"/>
@@ -242,6 +242,12 @@
         </a-button>
       </div>
     </a-drawer>
+    <input
+      type="file"
+      ref="fileInput"
+      @change="getFile"
+      style="display: none"
+    >
   </div>
 </template>
 
@@ -259,8 +265,10 @@ import {
   getScene,
   createdPath,
   animationDrawLine,
-  splicingGCode
+  splicingGCode,
+  drawPCD,
 } from '@js/drawFunction';
+import {PCDLoader} from 'three/examples/jsm/loaders/PCDLoader';
 
 export default {
   name: "TopBar",
@@ -304,6 +312,8 @@ export default {
       GCodeVisible: false, // G代码弹窗控制
       gCode: '', // g代码结果
       gSpinning: false, // g代码生成中控制
+      imageUrl: "",  //img绑定的src地址
+      postUrl: ""       //需要上传到的地址
     }
   },
   // 页面后退后清除数据
@@ -441,7 +451,21 @@ export default {
       el.click()
       //移除链接释放资源
       urlObject.revokeObjectURL(url)
-    }
+    },
+    // 选择本地PCD文件
+    selectPCDFile() {
+      this.$refs.fileInput.click();
+    },
+    // 文件选择后
+    getFile (event) {
+      const files = event.target.files;
+      const pcdPath = window.webkitURL.createObjectURL(files[0]);
+      let loader = new PCDLoader();
+      loader.load(pcdPath, (points) => {
+        removeAll();
+        drawPCD(points, 'PCD');
+      })
+    } ,
   }
 }
 </script>
