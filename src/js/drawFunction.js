@@ -529,26 +529,22 @@ const drawPointByPoints = (data, groupName, color) => {
   });//材质对象
   const points = new Three.Points(geometry, material);//点模型对象
   correctOffSet(points, modalOffSet); // 添加偏移修正
-  findObjectByName(groupName).add(points);
+  findObjectByName(groupName).add(points); // 将点对象加入特定名称对象中
   render();
 }
 
 /** 根据点数组绘制包围轨迹图形 **/
 const drawLineByPoints = (data, name, color) => {
-  // 将坐标点逆时针排序
-  // data.sort((a, b) => {
-  //   return Math.atan2(a.x, a.y) - Math.atan2(b.x, b.y);
-  // })
   const listPoints = data.map(item => {
     return new Three.Vector3(item.x, item.y, item.z)
   });
   const geometry = new Three.BufferGeometry().setFromPoints(listPoints);
-  const material = new Three.MeshBasicMaterial({
+  const material = new Three.MeshBasicMaterial({ // 设置渲染颜色和渲染模式
     color: color,
     side: Three.DoubleSide,
   });
   // Create the final object to add to the scene
-  const lineObject = new Three.Line(geometry, material);
+  const lineObject = new Three.Line(geometry, material); // 根据Points对象构建Line对象
   correctOffSet(lineObject, modalOffSet); // 添加偏移修正
   findObjectByName(name).add(lineObject);
   render();
@@ -694,34 +690,37 @@ function iniModelTopological() {
 
 /** 计算出水平切片点集 **/
 function getHorizontalSlicePoints(zHeight) {
-  const {resEdge, resFaces, resPoints} = topologicalData;
-  let resultPointData = [];
-  let startFaceIndex;
+  const {resEdge, resFaces, resPoints} = topologicalData; // 获取拓扑重构后的点、边、面数据
+  let resultPointData = []; // 初始化轮廓点信息数组
+  let startFaceIndex; // 声明初始遍历面片索引
   do {
+    // 搜寻满足高度要求并未被搜寻面片
     startFaceIndex = resFaces.findIndex(item => (item.zMin <= zHeight && zHeight < item.zMax) && (item.zMin < zHeight && zHeight <= item.zMax) && !item.hasSearch); // 任意获得一个符合条件的三角面片
-    if (startFaceIndex >= 0) {
+    if (startFaceIndex >= 0) { // 存在满足要求的面片
       resultPointData.push([]); // 初始化首个联通区域数组
-      let currentResIndex = resultPointData.length - 1; // 当前联通区域index
-      let nextFaceIndex = startFaceIndex; // 下一个计算的三角面片位置
-      let lastEdgeHash = null;
+      let currentResIndex = resultPointData.length - 1; // 记录当前联通区域在结果数组中对应的索引值
+      let childStartFaceIndex = startFaceIndex; // 子轮廓区域初始遍历面片
+      let lastEdgeHash = null; // 初始化上一轮遍历最后边的哈希值
       do {
-        let finalEdgeHash = null;
-        resFaces[nextFaceIndex].hasSearch = true;
-        resFaces[nextFaceIndex].includeEdge.map(edgeHash => {
+        let finalEdgeHash = null; // 初始化当前遍历最后边的哈希值
+        resFaces[childStartFaceIndex].hasSearch = true; // 将当前面片被遍历状态置为true
+        // 遍历当前面片三边，计算三边与当前高度zHeight的空间关系
+        resFaces[childStartFaceIndex].includeEdge.map(edgeHash => {
           let pointA = resPoints.get(resEdge.get(edgeHash).includePoints[0]).vPoint;
           let pointB = resPoints.get(resEdge.get(edgeHash).includePoints[1]).vPoint;
           const p1z = Math.formatFloat(pointA.z, 5);
           const p2z = Math.formatFloat(pointB.z, 5);
-          if (p1z === zHeight && p2z !== zHeight) {
+          if (p1z === zHeight && p2z !== zHeight) { // zHeight切平面经过边的左端点
             if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
-              finalEdgeHash = edgeHash;
-              resultPointData[currentResIndex].push(pointA);
+              finalEdgeHash = edgeHash; // 将当前处理边哈希值赋值给finalEdgeHash
+              resultPointData[currentResIndex].push(pointA); // 将交点存入当前子轮廓点集数组中
             }
-          } else if (p1z !== zHeight && p2z === zHeight) {
+          } else if (p1z !== zHeight && p2z === zHeight) { // zHeight切平面经过边的右端点
             if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
               finalEdgeHash = edgeHash;
               resultPointData[currentResIndex].push(pointB);
             }
+            // zHeight切平面经过边内部
           } else if ((p1z > zHeight && p2z < zHeight) || (p1z < zHeight && p2z > zHeight)) {
             if (lastEdgeHash === null || lastEdgeHash !== edgeHash) {
               finalEdgeHash = edgeHash;
@@ -729,12 +728,13 @@ function getHorizontalSlicePoints(zHeight) {
             }
           }
         })
-        lastEdgeHash = finalEdgeHash;
-        // 通过过滤是否被打上遍历标记来判断是否是下一个临接面
-        nextFaceIndex = resEdge.get(finalEdgeHash).includeFaces.filter(item => !resFaces[item].hasSearch)[0];
-      } while (nextFaceIndex !== undefined)
+        lastEdgeHash = finalEdgeHash; // 将当前最后处理的边赋值给lastEdgeHash，作为下一轮中的上一轮遍历的最后边哈希值
+        // 寻找下一个邻接面索引
+        childStartFaceIndex = resEdge.get(finalEdgeHash).includeFaces.filter(item => !resFaces[item].hasSearch)[0];
+      } while (childStartFaceIndex !== undefined) // 未找到满足条件的面片则结束当前子轮廓计算
     }
-  } while (startFaceIndex !== -1)
+  } while (startFaceIndex !== -1) // 未找到满足条件的面片则结束切片轮廓处理
+  // 得到轮廓结果后，重置面片被搜索状态
   resFaces.forEach(item => {
     item.hasSearch = false;
   })
