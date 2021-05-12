@@ -137,7 +137,11 @@ export default {
     handleOk() {
       this.form.validateFields((err, values) => {
         if (!err) {
-          api.tokensController.updateUserInfo(values).then(res => {
+          const params = {
+            id: this.userData._id,
+            ...values,
+          }
+          api.tokensController.updateUserInfo(params).then(res => {
             if (res.data.success) {
               this.modalVisible = false;
               this.$emit('updateFatherData');

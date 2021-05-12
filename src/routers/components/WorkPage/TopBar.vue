@@ -421,6 +421,7 @@ export default {
             date: new Date(),
           });
           this.pathVisible = false;
+          this.treeData = getScene().children;
         }
       })
     },

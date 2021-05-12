@@ -443,7 +443,6 @@ export const animationDrawLine = () => {
     }
     // 生成一个时间序列
     let times = new Float32Array(arr);
-
     let posArr = []
     points.forEach(elem => {
       posArr.push(elem.x, elem.y, elem.z)
@@ -452,8 +451,7 @@ export const animationDrawLine = () => {
     let values = new Float32Array(posArr);
     // 创建一个帧动画的关键帧数据，曲线上的位置序列对应一个时间序列
     let posTrack = new Three.KeyframeTrack('.position', times, values);
-    let duration = curvePointsLen;
-    let clip = new Three.AnimationClip("default", duration, [posTrack]);
+    let clip = new Three.AnimationClip("default", curvePointsLen, [posTrack]);
     let mixer = new Three.AnimationMixer(sphere); // 绑定球体与曲线轨迹
     let AnimationAction = mixer.clipAction(clip); // 实例化动画操作
     AnimationAction.timeScale = 8; // 动画播放速度
@@ -466,7 +464,7 @@ export const animationDrawLine = () => {
       // 更新帧动画的时间
       mixer.update(clock.getDelta());
     }
-    render();
+    render(); // 页面执行渲染
   } else {
     Vue.prototype.$message.info('暂无轨迹数据!');
   }
@@ -829,9 +827,7 @@ export const createdPath = ({pathDensity: density, color}) => {
     Vue.prototype.$message.info('暂无切片数据!');
   } else {
     pathPoints = []; // 重置轨迹数据
-    let contourNum = 0;
     contourPoint.forEach(item => {
-      contourNum += item.length;
       let currentContourInfo = buildContourInfo(item); // 获取轮廓线数据
       currentContourInfo.forEach(contourItem => {
         let startY = contourItem.yMax; // 扫描线初始高度
@@ -861,7 +857,6 @@ export const createdPath = ({pathDensity: density, color}) => {
         }
       })
     })
-    console.log(contourNum);
     drawPathLineByPoints(pathPoints, '切片轨迹', color);
   }
 }
