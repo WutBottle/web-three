@@ -194,6 +194,30 @@ export const drawAxis = (size = 800) => {
   let arrowHelperZ = new Three.ArrowHelper(dirZ, origin, length, hexZ, headLength, headWidth);
   axisGroup.add(arrowHelperX, arrowHelperY, arrowHelperZ);
   scene.add(axisGroup);
+  drawText('X', {
+    fontsize: 16,
+    borderColor: {r: 255, g: 0, b: 0, a: 1},
+    backgroundColor: {r: 255, g: 0, b: 0, a: 1},
+    position: {x: size, y: -size / 2, z: 0},
+    XScale: size,
+    YScale: size * 0.5,
+  }, '坐标轴');
+  drawText('Y', {
+    fontsize: 16,
+    borderColor: {r: 0, g: 255, b: 0, a: 1},
+    backgroundColor: {r: 0, g: 255, b: 0, a: 1},
+    position: {x: 0, y: size / 2, z: 0},
+    XScale: size,
+    YScale: size * 0.5,
+  }, '坐标轴');
+  drawText('Z', {
+    fontsize: 16,
+    borderColor: {r: 0, g: 0, b: 255, a: 1},
+    backgroundColor: {r: 0, g: 0, b: 255, a: 1},
+    position: {x: 0, y: -size / 2, z: size},
+    XScale: size,
+    YScale: size * 0.5,
+  }, '坐标轴')
 }
 
 /** 绘制txt读取的曲线
@@ -275,7 +299,9 @@ export const createSurroundBox = (data) => {
     fontsize: 30,
     borderColor: {r: 0, g: 0, b: 0, a: 1},
     backgroundColor: {r: 0, g: 0, b: 0, a: 1},
-    position: {x: 10, y: -5, z: 0}
+    position: {x: 10, y: -5, z: 0},
+    XScale: Math.abs(Math.floor((boundingBox.max.x - boundingBox.min.x))),
+    YScale: -Math.abs(Math.floor((boundingBox.max.y - boundingBox.min.y) * 0.5)),
   }, '包络盒')
 }
 
@@ -615,7 +641,7 @@ export const drawText = (text, params, groupName) => {
   const fontface = Object.prototype.hasOwnProperty.call(params, "fontface") ? params['fontface'] : 'Arial';
   /* 字体大小 */
   const fontsize = Object.prototype.hasOwnProperty.call(params, "fontsize") ? params['fontsize'] : '20';
-  const borderThickness = Object.prototype.hasOwnProperty.call(params, "borderThickness") ? params["borderThickness"] : 4;
+  const borderThickness = Object.prototype.hasOwnProperty.call(params, "borderThickness") ? params["borderThickness"] : 1;
   /* 边框颜色 */
   const borderColor = Object.prototype.hasOwnProperty.call(params, "borderColor") ? params["borderColor"] : {
     r: 0,
@@ -632,6 +658,9 @@ export const drawText = (text, params, groupName) => {
   };
   /* 绘制位置 */
   const position = Object.prototype.hasOwnProperty.call(params, 'position') ? params['position'] : {x: 0, y: 0, z: 0};
+  /* 缩放比例 */
+  const XScale = Object.prototype.hasOwnProperty.call(params, 'XScale') ? params['XScale'] : 1;
+  const YScale = Object.prototype.hasOwnProperty.call(params, 'YScale') ? params['YScale'] : 1;
   /* 创建画布 */
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -657,9 +686,6 @@ export const drawText = (text, params, groupName) => {
   texture.needsUpdate = true;
   const spriteMaterial = new Three.SpriteMaterial({map: texture});
   const sprite = new Three.Sprite(spriteMaterial);
-  /* 缩放比例 */
-  const XScale = Math.abs(Math.floor((boundingBox.max.x - boundingBox.min.x)));
-  const YScale = -Math.abs(Math.floor((boundingBox.max.y - boundingBox.min.y) * 0.5));
   sprite.scale.set(XScale, YScale, 0);
   sprite.center = new Three.Vector2(0, 0);
   sprite.position.set(position.x, position.y, position.z);
@@ -894,9 +920,14 @@ export const splicingGCode = () => {
     } else {
       let operationPart = ''; // 执行G代码
       let E = 1; // 送丝长度
-      pathPoints.forEach(item => {
-        operationPart += 'G0 X' + item[0].x.toFixed(4) + ' Y' + item[0].y.toFixed(4) + ' Z' + item[0].z.toFixed(4) + ' F7800.00;\n';
-        operationPart += 'G1 X' + item[1].x.toFixed(4) + ' Y' + item[1].y.toFixed(4) + ' Z' + item[1].z.toFixed(4) + ' E' + E++ + ' F1080.00;\n';
+      pathPoints.forEach((item, index) => {
+        if(index) {
+          operationPart += 'G0 X' + item[0].x.toFixed(4) + ' Y' + item[0].y.toFixed(4) + ' Z' + item[0].z.toFixed(4) + ';\n';
+          operationPart += 'G1 X' + item[1].x.toFixed(4) + ' Y' + item[1].y.toFixed(4) + ' Z' + item[1].z.toFixed(4) + ' E' + E++ + ';\n';
+        }else {
+          operationPart += 'G0 X' + item[0].x.toFixed(4) + ' Y' + item[0].y.toFixed(4) + ' Z' + item[0].z.toFixed(4) + ' F7800.00;\n';
+          operationPart += 'G1 X' + item[1].x.toFixed(4) + ' Y' + item[1].y.toFixed(4) + ' Z' + item[1].z.toFixed(4) + ' E' + E++ + ' F1080.00;\n';
+        }
       })
       resolve(startPart + operationPart + endPart);
     }
